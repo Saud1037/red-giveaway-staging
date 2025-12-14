@@ -1,12 +1,3 @@
-// utils/helpers.js
-
-// اختيار فائزين عشوائيين
-function selectWinners(participants, count) {
-  const shuffled = [...participants].sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, Math.min(count, participants.length));
-}
-
-// تنسيق الوقت المتبقي
 function formatTimeLeft(ms) {
   const days = Math.floor(ms / (24 * 60 * 60 * 1000));
   const hours = Math.floor((ms % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
@@ -22,7 +13,6 @@ function formatTimeLeft(ms) {
   return result || '0s';
 }
 
-// تحويل الوقت من نص إلى ميلي ثانية
 function parseTime(timeString) {
   const regex = /(\d+)([smhd])/g;
   let totalMs = 0;
@@ -41,8 +31,4 @@ function parseTime(timeString) {
   return totalMs;
 }
 
-module.exports = {
-  selectWinners,
-  formatTimeLeft,
-  parseTime
-};
+module.exports = { formatTimeLeft, parseTime };

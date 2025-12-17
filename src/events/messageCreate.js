@@ -1,3 +1,5 @@
+// src/events/messageCreate.js
+
 const { EmbedBuilder } = require('discord.js');
 const supabase = require('../supabase');
 const store = require('../store');
@@ -8,13 +10,68 @@ const { saveGreetSettings, scheduleGreetMessageDeletion } = require('../services
 const { parseTime, formatTimeLeft } = require('../utils/time');
 const { selectWinners } = require('../utils/winners');
 
+// ✅ Owner-only
+const OWNER_ID = process.env.OWNER_ID;
+
 function registerMessageCreate(client) {
   client.on('messageCreate', async (message) => {
     if (message.author.bot || !message.guild) return;
 
+    // ✅ Owner check (silent if not owner)
+    const isOwner = message.author.id === OWNER_ID;
+
     // ✅ نفس كودك بالضبط (بدون فحص prefix)
     const args = message.content.slice(1).trim().split(/ +/);
     const command = args.shift().toLowerCase();
+
+    // =========================
+    // ✅ OWNER-ONLY COMMANDS
+    // =========================
+
+    // !botmembers → total members across all servers
+    if (command === 'botmembers') {
+      if (!isOwner) return;
+
+      let totalMembers = 0;
+      client.guilds.cache.forEach((guild) => {
+        totalMembers += guild.memberCount;
+      });
+
+      return message.reply(`👥 **Total Members:** ${totalMembers}`);
+    }
+
+    // !botservers → list servers the bot is in (reply in the same channel)
+    else if (command === 'botservers') {
+      if (!isOwner) return;
+
+      const servers = client.guilds.cache.map(
+        (guild) => `• **${guild.name}** — ${guild.memberCount} members`
+      );
+
+      if (servers.length === 0) return;
+
+      // تقسيم الرد لو كان طويل
+      const maxLength = 1800;
+      let buffer = `📌 **Bot Servers (${servers.length})**\n\n`;
+
+      for (const line of servers) {
+        if ((buffer + line + '\n').length > maxLength) {
+          await message.reply(buffer);
+          buffer = '';
+        }
+        buffer += line + '\n';
+      }
+
+      if (buffer.trim().length > 0) {
+        await message.reply(buffer);
+      }
+
+      return;
+    }
+
+    // =========================
+    // ✅ NORMAL BOT COMMANDS
+    // =========================
 
     // gstart
     if (command === 'gstart') {
@@ -99,7 +156,7 @@ function registerMessageCreate(client) {
       if (args.length === 0) return message.reply('❌ Usage: `!gend <message_id>`');
 
       const messageId = args[0];
-      const giveawayId = Object.keys(store.giveaways).find(id => store.giveaways[id].messageId === messageId);
+      const giveawayId = Object.keys(store.giveaways).find((id) => store.giveaways[id].messageId === messageId);
       if (!giveawayId) return message.reply('❌ No active giveaway found');
 
       await endGiveaway(client, giveawayId);
@@ -111,7 +168,7 @@ function registerMessageCreate(client) {
       const pageSize = 10;
       const page = parseInt(args[0]) || 1;
 
-      const active = Object.values(store.giveaways).filter(g => g.guildId === message.guild.id);
+      const active = Object.values(store.giveaways).filter((g) => g.guildId === message.guild.id);
       if (active.length === 0) return message.reply('📋 No active giveaways currently');
 
       const totalPages = Math.ceil(active.length / pageSize);
@@ -158,7 +215,7 @@ function registerMessageCreate(client) {
       if (giveaway.participants.length === 0) return message.reply('❌ No participants to reroll');
 
       const newWinners = selectWinners(giveaway.participants, giveaway.winners);
-      const mentions = newWinners.map(id => `<@${id}>`).join(', ');
+      const mentions = newWinners.map((id) => `<@${id}>`).join(', ');
       message.channel.send(`🔄 Congratulations ${mentions}! You are the new winners of **${giveaway.prize}**!`);
     }
 
@@ -185,7 +242,7 @@ function registerMessageCreate(client) {
         const channelId = message.channel.id;
 
         if (settings.channels.includes(channelId)) {
-          settings.channels = settings.channels.filter(id => id !== channelId);
+          settings.channels = settings.channels.filter((id) => id !== channelId);
           await saveGreetSettings(message.guild.id);
           return message.reply(`✅ Greeting channel ${message.channel} removed`);
         } else {
@@ -269,9 +326,9 @@ function registerMessageCreate(client) {
           embed.addFields({ name: 'Channels', value: 'No channels' });
         } else {
           const validChannels = settings.channels
-            .map(id => message.guild.channels.cache.get(id))
+            .map((id) => message.guild.channels.cache.get(id))
             .filter(Boolean)
-            .map(ch => `<#${ch.id}>`)
+            .map((ch) => `<#${ch.id}>`)
             .join(', ') || 'No valid channels';
 
           embed.addFields({ name: 'Channels', value: validChannels });

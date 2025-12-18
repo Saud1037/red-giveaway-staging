@@ -28,7 +28,8 @@ function registerMessageCreate(client) {
        🔐 OWNER-ONLY COMMANDS
        ========================= */
 
-    // عدد السيرفرات فقط
+
+      // عدد السيرفرات فقط
     if (command === 'botservers') {
       if (!isOwner) return;
       return message.reply(`🌐 **Total Servers:** ${client.guilds.cache.size}`);
@@ -56,6 +57,18 @@ function registerMessageCreate(client) {
       if (buffer.trim()) await message.reply(buffer);
       return;
     }
+    
+// عدد الأعضاء في كل السيرفرات
+else if (command === 'botmembers') {
+  if (!isOwner) return;
+
+  let total = 0;
+  client.guilds.cache.forEach(guild => {
+    total += guild.memberCount;
+  });
+
+  return message.reply(`👥 **Total Members:** ${total}`);
+}
 
     // البحث عن سيرفر
     else if (command === 'botserverfind') {

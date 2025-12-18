@@ -105,6 +105,13 @@ else if (command === 'botmembers') {
       );
     }
     
+      // رابط دعوة البوت
+ if (command === 'botinvite') {
+  const invite = `https://discord.com/oauth2/authorize?client_id=${client.user.id}&permissions=274877990912&scope=bot`;
+
+  return message.reply(`🔗 **Invite the bot:**\n${invite}`);
+}
+
     // إحصائيات البوت العامة
     else if (command === 'botstats') {
   if (!isOwner) return;
@@ -489,12 +496,6 @@ else if (command === 'boterrors') {
       }
     }
   });
-}
-    // رابط دعوة البوت
- if (command === 'botinvite') {
-  const invite = `https://discord.com/oauth2/authorize?client_id=${client.user.id}&permissions=274877990912&scope=bot`;
-
-  return message.reply(`🔗 **Invite the bot:**\n${invite}`);
 }
 
 module.exports = { registerMessageCreate };

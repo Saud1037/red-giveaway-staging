@@ -3,6 +3,7 @@
 const { EmbedBuilder } = require('discord.js');
 const supabase = require('../supabase');
 const store = require('../store');
+const os = require('os');
 
 const { endGiveaway, saveGiveaway } = require('../services/giveawayService');
 const { saveGreetSettings, scheduleGreetMessageDeletion } = require('../services/greetService');
@@ -10,47 +11,37 @@ const { saveGreetSettings, scheduleGreetMessageDeletion } = require('../services
 const { parseTime, formatTimeLeft } = require('../utils/time');
 const { selectWinners } = require('../utils/winners');
 
-// ✅ Owner-only
+// 🔐 Owner only
 const OWNER_ID = process.env.OWNER_ID;
 
 function registerMessageCreate(client) {
   client.on('messageCreate', async (message) => {
     if (message.author.bot || !message.guild) return;
 
-    // ✅ Owner check (silent if not owner)
     const isOwner = message.author.id === OWNER_ID;
 
-    // ✅ نفس كودك بالضبط (بدون فحص prefix)
+    // نفس منطقك (بدون فحص prefix)
     const args = message.content.slice(1).trim().split(/ +/);
     const command = args.shift().toLowerCase();
 
-    // =========================
-    // ✅ OWNER-ONLY COMMANDS
-    // =========================
+    /* =========================
+       🔐 OWNER-ONLY COMMANDS
+       ========================= */
 
-    // !botmembers → total members across all servers
-    if (command === 'botmembers') {
+    // عدد السيرفرات فقط
+    if (command === 'botservers') {
       if (!isOwner) return;
-
-      let totalMembers = 0;
-      client.guilds.cache.forEach((guild) => {
-        totalMembers += guild.memberCount;
-      });
-
-      return message.reply(`👥 **Total Members:** ${totalMembers}`);
+      return message.reply(`🌐 **Total Servers:** ${client.guilds.cache.size}`);
     }
 
-    // !botservers → list servers the bot is in (reply in the same channel)
-    else if (command === 'botservers') {
+    // قائمة السيرفرات (اسم + ID + أعضاء)
+    else if (command === 'botserverlist') {
       if (!isOwner) return;
 
-      const servers = client.guilds.cache.map(
-        (guild) => `• **${guild.name}** — ${guild.memberCount} members`
-      );
+      const servers = client.guilds.cache
+        .map(g => `• **${g.name}** | ID: \`${g.id}\` | Members: **${g.memberCount}**`)
+        .sort((a, b) => a.localeCompare(b));
 
-      if (servers.length === 0) return;
-
-      // تقسيم الرد لو كان طويل
       const maxLength = 1800;
       let buffer = `📌 **Bot Servers (${servers.length})**\n\n`;
 
@@ -62,12 +53,88 @@ function registerMessageCreate(client) {
         buffer += line + '\n';
       }
 
-      if (buffer.trim().length > 0) {
-        await message.reply(buffer);
-      }
-
+      if (buffer.trim()) await message.reply(buffer);
       return;
     }
+
+    // البحث عن سيرفر
+    else if (command === 'botserverfind') {
+      if (!isOwner) return;
+
+      const query = args.join(' ').trim();
+      if (!query) return message.reply('❌ Usage: `!botserverfind <name or server_id>`');
+
+      const exact = client.guilds.cache.get(query);
+      if (exact) {
+        return message.reply(
+          `✅ Found:\n• **${exact.name}** | ID: \`${exact.id}\` | Members: **${exact.memberCount}**`
+        );
+      }
+
+      const qLower = query.toLowerCase();
+      const results = client.guilds.cache
+        .filter(g => g.name.toLowerCase().includes(qLower))
+        .map(g => `• **${g.name}** | ID: \`${g.id}\` | Members: **${g.memberCount}**`)
+        .slice(0, 10);
+
+      if (results.length === 0) return message.reply('❌ No matches found.');
+      return message.reply(`🔎 Results (max 10):\n${results.join('\n')}`);
+    }
+
+    // Ping
+    else if (command === 'botping') {
+      if (!isOwner) return;
+      const sent = await message.reply('🏓 Pinging...');
+      const latency = sent.createdTimestamp - message.createdTimestamp;
+      return sent.edit(
+        `🏓 **Pong!**\n• Message latency: **${latency}ms**\n• API latency: **${Math.round(client.ws.ping)}ms**`
+      );
+    }
+
+    // Uptime
+    else if (command === 'botuptime') {
+      if (!isOwner) return;
+
+      const ms = process.uptime() * 1000;
+      const d = Math.floor(ms / 86400000);
+      const h = Math.floor((ms % 86400000) / 3600000);
+      const m = Math.floor((ms % 3600000) / 60000);
+
+      return message.reply(`⏱️ **Uptime:** ${d}d ${h}h ${m}m`);
+    }
+
+    // Memory usage
+    else if (command === 'botmemory') {
+      if (!isOwner) return;
+
+      const used = process.memoryUsage().rss / 1024 / 1024;
+      const total = os.totalmem() / 1024 / 1024;
+
+      return message.reply(`🧠 **Memory:** ${used.toFixed(1)} MB / ${total.toFixed(0)} MB`);
+    }
+
+    // عدد القيفاويات النشطة
+    else if (command === 'botactivegiveaways') {
+      if (!isOwner) return;
+      return message.reply(`🎉 **Active Giveaways:** ${Object.keys(store.giveaways).length}`);
+    }
+
+    // إحصائيات الترحيب للسيرفر الحالي
+    else if (command === 'botgreetstats') {
+      if (!isOwner) return;
+
+      const s = store.greetSettings[message.guild.id];
+      if (!s) return message.reply('👋 No greet settings for this server.');
+
+      const channels = s.channels?.length
+        ? s.channels.map(id => `<#${id}>`).join(', ')
+        : 'No channels';
+
+      return message.reply(
+        `👋 **Greet Settings**\n• Channels: ${channels}\n• Message: ${s.message}\n• Auto-delete: ${s.delete_time || 'Off'}`
+      );
+    }
+
 
     // =========================
     // ✅ NORMAL BOT COMMANDS

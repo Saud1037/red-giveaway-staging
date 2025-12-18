@@ -8,6 +8,7 @@ const os = require('os');
 const { endGiveaway, saveGiveaway } = require('../services/giveawayService');
 const { saveGreetSettings, scheduleGreetMessageDeletion } = require('../services/greetService');
 
+const { logError, getErrors } = require('../utils/errorBuffer');
 const { parseTime, formatTimeLeft } = require('../utils/time');
 const { selectWinners } = require('../utils/winners');
 
@@ -29,7 +30,7 @@ function registerMessageCreate(client) {
        ========================= */
 
 
-      // عدد السيرفرات فقط
+       // عدد السيرفرات فقط
     if (command === 'botservers') {
       if (!isOwner) return;
       return message.reply(`🌐 **Total Servers:** ${client.guilds.cache.size}`);
@@ -57,7 +58,7 @@ function registerMessageCreate(client) {
       if (buffer.trim()) await message.reply(buffer);
       return;
     }
-    
+
 // عدد الأعضاء في كل السيرفرات
 else if (command === 'botmembers') {
   if (!isOwner) return;
@@ -148,6 +149,47 @@ else if (command === 'botmembers') {
       );
     }
 
+    // حالة البوت الصحية
+else if (command === 'bothealth') {
+  if (!isOwner) return;
+
+  const apiPing = Math.round(client.ws.ping);
+  const discordStatus = apiPing < 200 ? '🟢 Good' : apiPing < 400 ? '🟡 Slow' : '🔴 Bad';
+
+  let dbStatus = '🟢 Connected';
+  try {
+    const { error } = await supabase.from('giveaways').select('id').limit(1);
+    if (error) throw error;
+  } catch (err) {
+    logError(err);
+    dbStatus = '🔴 Error';
+  }
+
+  const upMin = Math.floor(process.uptime() / 60);
+
+  return message.reply(
+    `🩺 **Bot Health**\n` +
+    `• Discord API: ${discordStatus} (${apiPing}ms)\n` +
+    `• Supabase: ${dbStatus}\n` +
+    `• Uptime: ${upMin} min`
+  );
+}
+
+    // عرض آخر الأخطاء المسجلة
+else if (command === 'boterrors') {
+  if (!isOwner) return;
+
+  const errors = getErrors();
+  if (errors.length === 0) return message.reply('✅ No recent errors recorded.');
+
+  const lines = errors.map((e, i) => {
+    const time = e.time.toLocaleString();
+    const msg = e.message.length > 250 ? e.message.slice(0, 250) + '…' : e.message;
+    return `${i + 1}. **${time}**\n\`${msg.replace(/`/g, "'")}\``;
+  });
+
+  return message.reply(`🚨 **Last ${errors.length} Errors**\n` + lines.join('\n\n'));
+}
 
     // =========================
     // ✅ NORMAL BOT COMMANDS

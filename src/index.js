@@ -1,5 +1,17 @@
 require('dotenv').config();
 
+const { logError } = require('./utils/errorBuffer');
+
+process.on('unhandledRejection', (err) => {
+  logError(err);
+  console.error('Unhandled Rejection:', err);
+});
+
+process.on('uncaughtException', (err) => {
+  logError(err);
+  console.error('Uncaught Exception:', err);
+});
+
 const client = require('./client');
 const { registerEvents } = require('./events/ready');
 const { registerGuildMemberAdd } = require('./events/guildMemberAdd');

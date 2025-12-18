@@ -104,6 +104,27 @@ else if (command === 'botmembers') {
         `🏓 **Pong!**\n• Message latency: **${latency}ms**\n• API latency: **${Math.round(client.ws.ping)}ms**`
       );
     }
+    
+    // إحصائيات البوت العامة
+    else if (command === 'botstats') {
+  if (!isOwner) return;
+
+  let totalMembers = 0;
+  client.guilds.cache.forEach(g => totalMembers += g.memberCount);
+
+  const embed = new EmbedBuilder()
+    .setTitle('🤖 Bot Stats')
+    .setColor('#5865F2')
+    .addFields(
+      { name: 'Servers', value: `${client.guilds.cache.size}`, inline: true },
+      { name: 'Members', value: `${totalMembers}`, inline: true },
+      { name: 'Active Giveaways', value: `${Object.keys(store.giveaways).length}`, inline: true },
+      { name: 'Ping', value: `${Math.round(client.ws.ping)}ms`, inline: true },
+      { name: 'Uptime', value: `${Math.floor(process.uptime() / 60)} min`, inline: true }
+    );
+
+  return message.reply({ embeds: [embed] });
+}
 
     // Uptime
     else if (command === 'botuptime') {
@@ -468,6 +489,12 @@ else if (command === 'boterrors') {
       }
     }
   });
+}
+    // رابط دعوة البوت
+ if (command === 'botinvite') {
+  const invite = `https://discord.com/oauth2/authorize?client_id=${client.user.id}&permissions=274877990912&scope=bot`;
+
+  return message.reply(`🔗 **Invite the bot:**\n${invite}`);
 }
 
 module.exports = { registerMessageCreate };

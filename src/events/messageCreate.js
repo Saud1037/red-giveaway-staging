@@ -22,8 +22,19 @@ function registerMessageCreate(client) {
     const isOwner = message.author.id === OWNER_ID;
 
     // نفس منطقك (بدون فحص prefix)
-    const args = message.content.slice(1).trim().split(/ +/);
-    const command = args.shift().toLowerCase();
+    const PREFIX = '!';
+
+client.on('messageCreate', async (message) => {
+  if (message.author.bot || !message.guild) return;
+
+  // ✅ لا تكمل إلا إذا الرسالة تبدأ بالبريفكس
+  if (!message.content.startsWith(PREFIX)) return;
+
+  const args = message.content.slice(PREFIX.length).trim().split(/ +/);
+  const command = (args.shift() || '').toLowerCase();
+
+  // باقي أوامرك مثل ما هي...
+});
 
     /* =========================
        🔐 OWNER-ONLY COMMANDS

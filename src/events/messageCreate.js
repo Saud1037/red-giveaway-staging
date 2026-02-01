@@ -21,20 +21,31 @@ function registerMessageCreate(client) {
 
     const isOwner = message.author.id === OWNER_ID;
 
-    // نفس منطقك (بدون فحص prefix)
-    const PREFIX = '!';
+   const PREFIX = '!';
 
 client.on('messageCreate', async (message) => {
   if (message.author.bot || !message.guild) return;
 
-  // ✅ لا تكمل إلا إذا الرسالة تبدأ بالبريفكس
+  // ✅ Debug: شوف وش يقرا البوت
+  if (message.content.startsWith(PREFIX)) {
+    console.log('COMMAND MESSAGE:', message.content);
+  }
+
   if (!message.content.startsWith(PREFIX)) return;
 
   const args = message.content.slice(PREFIX.length).trim().split(/ +/);
   const command = (args.shift() || '').toLowerCase();
 
-  // باقي أوامرك مثل ما هي...
+  if (!command) return;
+
+  // ✅ Debug: يرد لك اسم الأمر اللي فهمه
+  if (command === 'ping') {
+    return message.reply('pong ✅');
+  }
+
+  // باقي أوامرك...
 });
+
 
     /* =========================
        🔐 OWNER-ONLY COMMANDS

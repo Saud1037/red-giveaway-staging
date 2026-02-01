@@ -21,22 +21,17 @@ function registerMessageCreate(client) {
 
     const isOwner = message.author.id === OWNER_ID;
 
-   const PREFIX = '!';
-
-client.on('messageCreate', async (message) => {
+   client.on('messageCreate', async (message) => {
   if (message.author.bot || !message.guild) return;
 
-  // ✅ Debug: شوف وش يقرا البوت
-  if (message.content.startsWith(PREFIX)) {
-    console.log('COMMAND MESSAGE:', message.content);
-  }
-
-  if (!message.content.startsWith(PREFIX)) return;
+  const PREFIX = process.env.PREFIX || '!'; // أو حطها ثابتة '!'
+  if (!message.content.startsWith(PREFIX)) return; // ✅ ما يشغل أي أمر بدون البريفكس
 
   const args = message.content.slice(PREFIX.length).trim().split(/ +/);
   const command = (args.shift() || '').toLowerCase();
-
   if (!command) return;
+
+  // باقي if/else للأوامر نفس ما هي تحت
 
   // ✅ Debug: يرد لك اسم الأمر اللي فهمه
   if (command === 'ping') {

@@ -8,13 +8,17 @@ const os = require('os');
 const { endGiveaway, saveGiveaway } = require('../services/giveawayService');
 const { saveGreetSettings, scheduleGreetMessageDeletion } = require('../services/greetService');
 
-const { logError, getErrors } = require('../utils/errorBuffer');
 const { parseTime, formatTimeLeft } = require('../utils/time');
 const { selectWinners } = require('../utils/winners');
 
 // 🔐 Owner only
 const OWNER_ID = (process.env.OWNER_ID || '').trim();
 const PREFIX = (process.env.PREFIX || '!').trim();
+
+// Placeholder for getErrors function
+function getErrors() {
+  return [];
+}
 
 function registerMessageCreate(client) {
   client.on('messageCreate', async (message) => {
@@ -169,7 +173,6 @@ function registerMessageCreate(client) {
 
       // Health (عام/أو حسب ملفك)
       else if (command === 'bothealth') {
-        // إذا تبيه owner فقط حط: if (!isOwner) return;
         const embed = new EmbedBuilder()
           .setTitle('✅ Bot Health')
           .setColor('#00ff00')
@@ -184,7 +187,6 @@ function registerMessageCreate(client) {
 
       // Errors (عام/أو حسب ملفك)
       else if (command === 'boterrors') {
-        // إذا تبيه owner فقط حط: if (!isOwner) return;
         const errors = getErrors();
         if (!errors.length) return message.reply('✅ No recent errors logged.');
 
@@ -287,6 +289,10 @@ function registerMessageCreate(client) {
 - \`${PREFIX}greet test\` → Test greeting
 - \`${PREFIX}greet stats\` → Show current settings
 Variables: {mention}, {username}`,
+            },
+            {
+              name: `🎰 ${PREFIX}wheel <@user1> <@user2> ... OR <username1> <username2> ...`,
+              value: 'Spin the wheel and pick a random winner from mentioned users or usernames',
             }
           );
 
@@ -360,6 +366,80 @@ Variables: {mention}, {username}`,
         const newWinners = selectWinners(giveaway.participants, giveaway.winners);
         const mentions = newWinners.map((id) => `<@${id}>`).join(', ');
         return message.channel.send(`🔄 Congratulations ${mentions}! You are the new winners of **${giveaway.prize}**!`);
+      }
+
+      /* =========================
+         🎰 WHEEL COMMAND
+         ========================= */
+
+      else if (command === 'wheel') {
+        if (args.length === 0) {
+          return message.reply(`❌ Usage: \`${PREFIX}wheel <@user1> <@user2> ...\` or \`${PREFIX}wheel username1 username2 ...\``);
+        }
+
+        const participants = [];
+        const participantNames = [];
+
+        // معالجة المنشنز
+        if (message.mentions.users.size > 0) {
+          message.mentions.users.forEach(user => {
+            if (!user.bot) {
+              participants.push(user.id);
+              participantNames.push(user.username);
+            }
+          });
+        }
+
+        // معالجة اليوزرات (إذا ما فيه منشنز)
+        if (participants.length === 0) {
+          for (const arg of args) {
+            // تنظيف النص من @ و # وأي رموز
+            const cleanArg = arg.replace(/[@#]/g, '').trim();
+            if (cleanArg) {
+              participantNames.push(cleanArg);
+            }
+          }
+        }
+
+        // تأكد من وجود مشاركين
+        const finalList = participants.length > 0 ? participants : participantNames;
+        if (finalList.length < 2) {
+          return message.reply('❌ You need at least 2 participants!');
+        }
+
+        // رسالة البداية
+        const startEmbed = new EmbedBuilder()
+          .setTitle('🎰 Spinning the Wheel...')
+          .setDescription(`**${finalList.length}** participants entered!\n\n🎲 Picking a random winner...`)
+          .setColor('#FFA500');
+
+        const spinMessage = await message.reply({ embeds: [startEmbed] });
+
+        // انتظار قليل للتشويق
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // اختيار الفائز
+        const winnerIndex = Math.floor(Math.random() * finalList.length);
+        const winner = finalList[winnerIndex];
+
+        // تحديد نص الفائز
+        let winnerText;
+        if (participants.length > 0) {
+          winnerText = `<@${winner}>`;
+        } else {
+          winnerText = `**${winner}**`;
+        }
+
+        // رسالة النتيجة
+        const resultEmbed = new EmbedBuilder()
+          .setTitle('🎉 Winner Selected!')
+          .setDescription(`🎊 Congratulations ${winnerText}!\n\nYou were randomly selected from **${finalList.length}** participants!`)
+          .setColor('#00FF00')
+          .setFooter({ text: `Requested by ${message.author.username}` })
+          .setTimestamp();
+
+        await spinMessage.edit({ embeds: [resultEmbed] });
+        return;
       }
 
       /* =========================
@@ -492,7 +572,6 @@ Variables: {mention}, {username}`,
         }
       }
     } catch (err) {
-      logError(err);
       console.error('messageCreate error:', err);
     }
   });

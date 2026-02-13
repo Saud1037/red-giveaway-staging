@@ -378,67 +378,89 @@ Variables: {mention}, {username}`,
         }
 
         const participants = [];
-        const participantNames = [];
 
         // معالجة المنشنز
         if (message.mentions.users.size > 0) {
           message.mentions.users.forEach(user => {
             if (!user.bot) {
-              participants.push(user.id);
-              participantNames.push(user.username);
+              participants.push({ type: 'mention', value: user.id, display: user.username });
             }
           });
         }
 
-        // معالجة اليوزرات (إذا ما فيه منشنز)
+        // معالجة اليوزرات/الأسماء (إذا ما فيه منشنز)
         if (participants.length === 0) {
           for (const arg of args) {
             // تنظيف النص من @ و # وأي رموز
             const cleanArg = arg.replace(/[@#]/g, '').trim();
             if (cleanArg) {
-              participantNames.push(cleanArg);
+              participants.push({ type: 'username', value: cleanArg, display: cleanArg });
             }
           }
         }
 
         // تأكد من وجود مشاركين
-        const finalList = participants.length > 0 ? participants : participantNames;
-        if (finalList.length < 2) {
+        if (participants.length < 2) {
           return message.reply('❌ You need at least 2 participants!');
         }
 
         // رسالة البداية
-        const startEmbed = new EmbedBuilder()
-          .setTitle('🎰 Spinning the Wheel...')
-          .setDescription(`**${finalList.length}** participants entered!\n\n🎲 Picking a random winner...`)
-          .setColor('#FFA500');
-
-        const spinMessage = await message.reply({ embeds: [startEmbed] });
+        const spinMessage = await message.reply(
+          `🎰 **Spinning the Wheel...**\n\n` +
+          `**${participants.length}** participants entered!\n` +
+          `🎲 Picking a random winner...`
+        );
 
         // انتظار قليل للتشويق
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         // اختيار الفائز
-        const winnerIndex = Math.floor(Math.random() * finalList.length);
-        const winner = finalList[winnerIndex];
+        const winnerIndex = Math.floor(Math.random() * participants.length);
+        const winner = participants[winnerIndex];
 
-        // تحديد نص الفائز
+        // تحديد نص الفائز - التحقق من وجوده في السيرفر
         let winnerText;
-        if (participants.length > 0) {
-          winnerText = `<@${winner}>`;
+        
+        if (winner.type === 'mention') {
+          // إذا كان منشن، نتأكد إذا موجود في السيرفر
+          try {
+            const member = await message.guild.members.fetch(winner.value);
+            if (member) {
+              winnerText = `<@${winner.value}>`;
+            } else {
+              winnerText = `**${winner.display}**`;
+            }
+          } catch (error) {
+            winnerText = `**${winner.display}**`;
+          }
         } else {
-          winnerText = `**${winner}**`;
+          // إذا كان username، نحاول نلقى العضو في السيرفر
+          try {
+            const members = await message.guild.members.fetch();
+            const foundMember = members.find(m => 
+              m.user.username.toLowerCase() === winner.value.toLowerCase() ||
+              m.user.tag.toLowerCase() === winner.value.toLowerCase() ||
+              m.displayName.toLowerCase() === winner.value.toLowerCase()
+            );
+            
+            if (foundMember) {
+              winnerText = `<@${foundMember.user.id}>`;
+            } else {
+              winnerText = `**${winner.value}**`;
+            }
+          } catch (error) {
+            winnerText = `**${winner.value}**`;
+          }
         }
 
-        // رسالة النتيجة
-        const resultEmbed = new EmbedBuilder()
-          .setTitle('🎉 Winner Selected!')
-          .setDescription(`🎊 Congratulations ${winnerText}!\n\nYou were randomly selected from **${finalList.length}** participants!`)
-          .setColor('#00FF00')
-          .setFooter({ text: `Requested by ${message.author.username}` })
-          .setTimestamp();
-
-        await spinMessage.edit({ embeds: [resultEmbed] });
+        // رسالة النتيجة - نص بسيط بدون embed
+        await spinMessage.edit(
+          `🎉 **Winner Selected!**\n\n` +
+          `🎊 Congratulations ${winnerText}!\n\n` +
+          `You were randomly selected from **${participants.length}** participants!\n\n` +
+          `_Requested by ${message.author.username}_`
+        );
+        
         return;
       }
 

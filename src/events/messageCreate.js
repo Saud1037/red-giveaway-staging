@@ -1,5 +1,3 @@
-// src/events/messageCreate.js
-
 const { EmbedBuilder, PermissionsBitField } = require('discord.js');
 const supabase = require('../supabase');
 const store = require('../store');
@@ -7,6 +5,7 @@ const os = require('os');
 
 const { endGiveaway, saveGiveaway } = require('../services/giveawayService');
 const { saveGreetSettings, scheduleGreetMessageDeletion } = require('../services/greetService');
+const { handleSetAvatar, handleSetBanner, handleSetProfile, handleResetProfile } = require('../services/profileService');
 
 const { parseTime, formatTimeLeft } = require('../utils/time');
 const { selectWinners } = require('../utils/winners');
@@ -15,17 +14,12 @@ const { selectWinners } = require('../utils/winners');
 const OWNER_ID = (process.env.OWNER_ID || '').trim();
 const PREFIX = (process.env.PREFIX || '!').trim();
 
-// Placeholder for getErrors function
-function getErrors() {
-  return [];
-}
-
 function registerMessageCreate(client) {
   client.on('messageCreate', async (message) => {
     try {
       if (message.author.bot || !message.guild) return;
 
-      // ✅ only handle commands with prefix
+      
       if (!message.content.startsWith(PREFIX)) return;
 
       const args = message.content.slice(PREFIX.length).trim().split(/\s+/);
@@ -38,13 +32,13 @@ function registerMessageCreate(client) {
          🔐 OWNER-ONLY COMMANDS
          ========================= */
 
-      // عدد السيرفرات فقط
+      
       if (command === 'botservers') {
         if (!isOwner) return;
         return message.reply(`🌐 **Total Servers:** ${client.guilds.cache.size}`);
       }
 
-      // قائمة السيرفرات (اسم + ID + أعضاء)
+      
       else if (command === 'botserverlist') {
         if (!isOwner) return;
 
@@ -67,7 +61,7 @@ function registerMessageCreate(client) {
         return;
       }
 
-      // عدد الأعضاء في كل السيرفرات
+      
       else if (command === 'botmembers') {
         if (!isOwner) return;
 
@@ -79,7 +73,7 @@ function registerMessageCreate(client) {
         return message.reply(`👥 **Total Members:** ${total}`);
       }
 
-      // البحث عن سيرفر
+      
       else if (command === 'botserverfind') {
         if (!isOwner) return;
 
@@ -103,7 +97,7 @@ function registerMessageCreate(client) {
         return message.reply(`🔎 Results (max 10):\n${results.join('\n')}`);
       }
 
-      // Ping (owner)
+      
       else if (command === 'botping') {
         if (!isOwner) return;
         const sent = await message.reply('🏓 Pinging...');
@@ -115,13 +109,13 @@ function registerMessageCreate(client) {
         );
       }
 
-      // رابط دعوة البوت (عام)
+      
       if (command === 'botinvite') {
         const invite = `https://discord.com/oauth2/authorize?client_id=${client.user.id}&permissions=274877990912&scope=bot`;
         return message.reply(`🔗 **Invite the bot:**\n${invite}`);
       }
 
-      // إحصائيات البوت (owner)
+      
       else if (command === 'botstats') {
         if (!isOwner) return;
 
@@ -142,7 +136,7 @@ function registerMessageCreate(client) {
         return message.reply({ embeds: [embed] });
       }
 
-      // Uptime (owner)
+      
       else if (command === 'botuptime') {
         if (!isOwner) return;
 
@@ -154,7 +148,7 @@ function registerMessageCreate(client) {
         return message.reply(`⏱️ **Uptime:** ${d}d ${h}h ${m}m`);
       }
 
-      // Memory usage (owner)
+      
       else if (command === 'botmemory') {
         if (!isOwner) return;
 
@@ -163,7 +157,7 @@ function registerMessageCreate(client) {
         return message.reply(`🧠 **Memory:** ${used.toFixed(1)} MB / ${total.toFixed(0)} MB`);
       }
 
-      // CPU info (owner)
+      
       else if (command === 'botcpu') {
         if (!isOwner) return;
 
@@ -171,8 +165,9 @@ function registerMessageCreate(client) {
         return message.reply(`🖥️ **CPU:** ${cpus[0]?.model || 'Unknown'} | Cores: **${cpus.length}**`);
       }
 
-      // Health (عام/أو حسب ملفك)
+      
       else if (command === 'bothealth') {
+        
         const embed = new EmbedBuilder()
           .setTitle('✅ Bot Health')
           .setColor('#00ff00')
@@ -185,8 +180,9 @@ function registerMessageCreate(client) {
         return message.reply({ embeds: [embed] });
       }
 
-      // Errors (عام/أو حسب ملفك)
+      
       else if (command === 'boterrors') {
+        
         const errors = getErrors();
         if (!errors.length) return message.reply('✅ No recent errors logged.');
 
@@ -196,6 +192,30 @@ function registerMessageCreate(client) {
           .join('\n');
 
         return message.reply(`⚠️ Recent Errors (last 10):\n\`\`\`\n${text}\n\`\`\``);
+      }
+
+      /* =========================
+         🖼️ PROFILE COMMANDS (Owner Only)
+         ========================= */
+
+      else if (command === 'setavatar') {
+        if (!isOwner) return message.reply('❌ Only the bot owner can use this command.');
+        return handleSetAvatar(message, args);
+      }
+
+      else if (command === 'setbanner') {
+        if (!isOwner) return message.reply('❌ Only the bot owner can use this command.');
+        return handleSetBanner(message, args);
+      }
+
+      else if (command === 'setprofile') {
+        if (!isOwner) return message.reply('❌ Only the bot owner can use this command.');
+        return handleSetProfile(message, args);
+      }
+
+      else if (command === 'resetprofile') {
+        if (!isOwner) return message.reply('❌ Only the bot owner can use this command.');
+        return handleResetProfile(message);
       }
 
       /* =========================
@@ -291,8 +311,12 @@ function registerMessageCreate(client) {
 Variables: {mention}, {username}`,
             },
             {
-              name: `🎰 ${PREFIX}wheel <@user1> <@user2> ... OR <username1> <username2> ...`,
-              value: 'Spin the wheel and pick a random winner from mentioned users or usernames',
+              name: `🖼️ Profile Commands (Owner Only)`,
+              value:
+                `\`${PREFIX}setavatar <url>\` → Set server avatar\n` +
+                `\`${PREFIX}setbanner <url>\` → Set server banner\n` +
+                `\`${PREFIX}setprofile <avatar_url> <banner_url> [bio]\` → Set avatar + banner + bio\n` +
+                `\`${PREFIX}resetprofile\` → Reset server profile`,
             }
           );
 
@@ -366,102 +390,6 @@ Variables: {mention}, {username}`,
         const newWinners = selectWinners(giveaway.participants, giveaway.winners);
         const mentions = newWinners.map((id) => `<@${id}>`).join(', ');
         return message.channel.send(`🔄 Congratulations ${mentions}! You are the new winners of **${giveaway.prize}**!`);
-      }
-
-      /* =========================
-         🎰 WHEEL COMMAND
-         ========================= */
-
-      else if (command === 'wheel') {
-        if (args.length === 0) {
-          return message.reply(`❌ Usage: \`${PREFIX}wheel <@user1> <@user2> ...\` or \`${PREFIX}wheel username1 username2 ...\``);
-        }
-
-        const participants = [];
-
-        // معالجة المنشنز
-        if (message.mentions.users.size > 0) {
-          message.mentions.users.forEach(user => {
-            if (!user.bot) {
-              participants.push({ type: 'mention', value: user.id, display: user.username });
-            }
-          });
-        }
-
-        // معالجة اليوزرات/الأسماء (إذا ما فيه منشنز)
-        if (participants.length === 0) {
-          for (const arg of args) {
-            // تنظيف النص من @ و # وأي رموز
-            const cleanArg = arg.replace(/[@#]/g, '').trim();
-            if (cleanArg) {
-              participants.push({ type: 'username', value: cleanArg, display: cleanArg });
-            }
-          }
-        }
-
-        // تأكد من وجود مشاركين
-        if (participants.length < 2) {
-          return message.reply('❌ You need at least 2 participants!');
-        }
-
-        // رسالة البداية
-        const spinMessage = await message.reply(
-          `🎰 **Spinning the Wheel...**\n\n` +
-          `**${participants.length}** participants entered!\n` +
-          `🎲 Picking a random winner...`
-        );
-
-        // انتظار قليل للتشويق
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        // اختيار الفائز
-        const winnerIndex = Math.floor(Math.random() * participants.length);
-        const winner = participants[winnerIndex];
-
-        // تحديد نص الفائز - التحقق من وجوده في السيرفر
-        let winnerText;
-        
-        if (winner.type === 'mention') {
-          // إذا كان منشن، نتأكد إذا موجود في السيرفر
-          try {
-            const member = await message.guild.members.fetch(winner.value);
-            if (member) {
-              winnerText = `<@${winner.value}>`;
-            } else {
-              winnerText = `**${winner.display}**`;
-            }
-          } catch (error) {
-            winnerText = `**${winner.display}**`;
-          }
-        } else {
-          // إذا كان username، نحاول نلقى العضو في السيرفر
-          try {
-            const members = await message.guild.members.fetch();
-            const foundMember = members.find(m => 
-              m.user.username.toLowerCase() === winner.value.toLowerCase() ||
-              m.user.tag.toLowerCase() === winner.value.toLowerCase() ||
-              m.displayName.toLowerCase() === winner.value.toLowerCase()
-            );
-            
-            if (foundMember) {
-              winnerText = `<@${foundMember.user.id}>`;
-            } else {
-              winnerText = `**${winner.value}**`;
-            }
-          } catch (error) {
-            winnerText = `**${winner.value}**`;
-          }
-        }
-
-        // رسالة النتيجة - نص بسيط بدون embed
-        await spinMessage.edit(
-          `🎉 **Winner Selected!**\n\n` +
-          `🎊 Congratulations ${winnerText}!\n\n` +
-          `You were randomly selected from **${participants.length}** participants!\n\n` +
-          `_Requested by ${message.author.username}_`
-        );
-        
-        return;
       }
 
       /* =========================
@@ -594,6 +522,7 @@ Variables: {mention}, {username}`,
         }
       }
     } catch (err) {
+      logError(err);
       console.error('messageCreate error:', err);
     }
   });

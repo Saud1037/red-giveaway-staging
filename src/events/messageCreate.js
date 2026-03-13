@@ -5,7 +5,7 @@ const os = require('os');
 
 const { endGiveaway, saveGiveaway } = require('../services/giveawayService');
 const { saveGreetSettings, scheduleGreetMessageDeletion } = require('../services/greetService');
-const { handleSetAvatar, handleSetBanner, handleSetProfile, handleResetProfile } = require('../services/profileService');
+const { handleSetAvatar, handleSetBanner, handleResetProfile } = require('../services/profileService');
 
 const { parseTime, formatTimeLeft } = require('../utils/time');
 const { selectWinners } = require('../utils/winners');
@@ -199,22 +199,23 @@ function registerMessageCreate(client) {
          ========================= */
 
       else if (command === 'setavatar') {
-        if (!isOwner) return message.reply('❌ Only the bot owner can use this command.');
+        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+          return message.reply('❌ You need Administrator permission to use this command.');
+        }
         return handleSetAvatar(message, args);
       }
 
       else if (command === 'setbanner') {
-        if (!isOwner) return message.reply('❌ Only the bot owner can use this command.');
+        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+          return message.reply('❌ You need Administrator permission to use this command.');
+        }
         return handleSetBanner(message, args);
       }
 
-      else if (command === 'setprofile') {
-        if (!isOwner) return message.reply('❌ Only the bot owner can use this command.');
-        return handleSetProfile(message, args);
-      }
-
       else if (command === 'resetprofile') {
-        if (!isOwner) return message.reply('❌ Only the bot owner can use this command.');
+        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+          return message.reply('❌ You need Administrator permission to use this command.');
+        }
         return handleResetProfile(message);
       }
 
@@ -311,11 +312,10 @@ function registerMessageCreate(client) {
 Variables: {mention}, {username}`,
             },
             {
-              name: `🖼️ Profile Commands (Owner Only)`,
+              name: `🖼️ Profile Commands (Administrator Only)`,
               value:
                 `\`${PREFIX}setavatar <url>\` → Set server avatar\n` +
                 `\`${PREFIX}setbanner <url>\` → Set server banner\n` +
-                `\`${PREFIX}setprofile <avatar_url> <banner_url> [bio]\` → Set avatar + banner + bio\n` +
                 `\`${PREFIX}resetprofile\` → Reset server profile`,
             }
           );

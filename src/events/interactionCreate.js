@@ -147,18 +147,47 @@ function registerInteractionCreate(client) {
       }
 
       if (commandName === 'help') {
+        const P = process.env.PREFIX || '!';
         const embed = new EmbedBuilder()
-          .setTitle('🎉 Giveaway Bot - Commands').setColor('#FF0000')
-          .setDescription('All available commands:')
+          .setTitle('🎉 Giveaway Bot - Commands')
+          .setColor('#FF0000')
+          .setDescription('All available giveaway bot commands:')
           .addFields(
-            { name: '🚀 /gstart', value: 'Start a new giveaway' },
-            { name: '🗑️ /gend', value: 'End a giveaway manually' },
-            { name: '📋 /glist', value: 'Show active giveaways' },
-            { name: '🔄 /greroll', value: 'Reroll giveaway winners' },
-            { name: '👋 /greet', value: 'Manage greeting settings' },
-            { name: '🖼️ /setavatar', value: 'Set bot server avatar (Admin)' },
-            { name: '🖼️ /setbanner', value: 'Set bot server banner (Admin)' },
-            { name: '🔄 /resetprofile', value: 'Reset bot server profile (Admin)' },
+            {
+              name: '🚀 gstart',
+              value: `\`${P}gstart <time> <winners_count> <prize>\`\n\`/gstart\`\nStart a new giveaway`,
+            },
+            {
+              name: '🗑️ gend',
+              value: `\`${P}gend <message_id>\`\n\`/gend\`\nEnd a giveaway manually`,
+            },
+            {
+              name: '📋 glist',
+              value: `\`${P}glist\`\n\`/glist\`\nShow list of active giveaways`,
+            },
+            {
+              name: '🔄 greroll',
+              value: `\`${P}greroll <message_id>\`\n\`/greroll\`\nReroll winners for a giveaway`,
+            },
+            {
+              name: '👋 greet',
+              value:
+                `\`${P}greet\` / \`/greet toggle\` → Add/remove greeting channel\n` +
+                `\`${P}greet set <message>\` / \`/greet set\` → Set custom greeting\n` +
+                `\`${P}greet time <duration>\` / \`/greet time\` → Set auto-delete time\n` +
+                `\`${P}greet reset\` / \`/greet reset\` → Remove all channels\n` +
+                `\`${P}greet clear\` / \`/greet clear\` → Reset everything\n` +
+                `\`${P}greet test\` / \`/greet test\` → Test greeting\n` +
+                `\`${P}greet stats\` / \`/greet stats\` → Show current settings\n` +
+                `Variables: {mention}, {username}`,
+            },
+            {
+              name: '🖼️ Profile Commands (Administrator Only)',
+              value:
+                `\`${P}setavatar <url>\` / \`/setavatar\` → Set server avatar\n` +
+                `\`${P}setbanner <url>\` / \`/setbanner\` → Set server banner\n` +
+                `\`${P}resetprofile\` / \`/resetprofile\` → Reset server profile`,
+            },
           );
         return interaction.reply({ embeds: [embed] });
       }

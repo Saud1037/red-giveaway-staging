@@ -172,21 +172,21 @@ function registerInteractionCreate(client) {
             {
               name: '👋 greet',
               value:
-                `\`${P}greet\` / \`/greet toggle\` → Add/remove greeting channel\n` +
-                `\`${P}greet set <message>\` / \`/greet set\` → Set custom greeting\n` +
-                `\`${P}greet time <duration>\` / \`/greet time\` → Set auto-delete time\n` +
-                `\`${P}greet reset\` / \`/greet reset\` → Remove all channels\n` +
-                `\`${P}greet clear\` / \`/greet clear\` → Reset everything\n` +
-                `\`${P}greet test\` / \`/greet test\` → Test greeting\n` +
-                `\`${P}greet stats\` / \`/greet stats\` → Show current settings\n` +
+                `\`${P}greet\` | \`/greet toggle\` → Add/remove greeting channel\n` +
+                `\`${P}greet set <message>\` | \`/greet set\` → Set custom greeting\n` +
+                `\`${P}greet time <duration>\` | \`/greet time\` → Set auto-delete time\n` +
+                `\`${P}greet reset\` | \`/greet reset\` → Remove all channels\n` +
+                `\`${P}greet clear\` | \`/greet clear\` → Reset everything\n` +
+                `\`${P}greet test\` | \`/greet test\` → Test greeting\n` +
+                `\`${P}greet stats\` | \`/greet stats\` → Show current settings\n` +
                 `Variables: {mention}, {username}`,
             },
             {
               name: '🖼️ Profile Commands (Administrator Only)',
               value:
-                `\`${P}setavatar <url>\` / \`/setavatar\` → Set server avatar\n` +
-                `\`${P}setbanner <url>\` / \`/setbanner\` → Set server banner\n` +
-                `\`${P}resetprofile\` / \`/resetprofile\` → Reset server profile`,
+                `\`${P}setavatar <url>\` | \`/setavatar\` → Set server avatar\n` +
+                `\`${P}setbanner <url>\` | \`/setbanner\` → Set server banner\n` +
+                `\`${P}resetprofile\` | \`/resetprofile\` → Reset server profile`,
             },
           );
         return interaction.reply({ embeds: [embed] });

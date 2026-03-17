@@ -283,41 +283,40 @@ function registerMessageCreate(client) {
           .setDescription('All available giveaway bot commands:')
           .addFields(
             {
-              name: `🚀 ${PREFIX}gstart <time> <winners_count> <prize>`,
-              value: 'Start a new giveaway',
+              name: '🚀 gstart',
+              value: `\`${PREFIX}gstart <time> <winners_count> <prize>\`\n\`/gstart\`\nStart a new giveaway`,
             },
             {
-              name: `🗑️ ${PREFIX}gend <message_id>`,
-              value: 'End a giveaway manually',
+              name: '🗑️ gend',
+              value: `\`${PREFIX}gend <message_id>\`\n\`/gend\`\nEnd a giveaway manually`,
             },
             {
-              name: `📋 ${PREFIX}glist`,
-              value: 'Show list of active giveaways',
+              name: '📋 glist',
+              value: `\`${PREFIX}glist\`\n\`/glist\`\nShow list of active giveaways`,
             },
             {
-              name: `🔄 ${PREFIX}greroll <message_id>`,
-              value: 'Reroll winners for a giveaway',
+              name: '🔄 greroll',
+              value: `\`${PREFIX}greroll <message_id>\`\n\`/greroll\`\nReroll winners for a giveaway`,
             },
             {
-              name: `👋 ${PREFIX}greet`,
+              name: '👋 greet',
               value:
-                `Manage greeting settings:
-- \`${PREFIX}greet\` → Add/remove greeting channel
-- \`${PREFIX}greet set <message>\` → Set custom greeting
-- \`${PREFIX}greet time <duration>\` → Set auto-delete time
-- \`${PREFIX}greet reset\` → Remove all channels
-- \`${PREFIX}greet clear\` → Reset everything
-- \`${PREFIX}greet test\` → Test greeting
-- \`${PREFIX}greet stats\` → Show current settings
-Variables: {mention}, {username}`,
+                `\`${PREFIX}greet\` / \`/greet toggle\` → Add/remove greeting channel\n` +
+                `\`${PREFIX}greet set <message>\` / \`/greet set\` → Set custom greeting\n` +
+                `\`${PREFIX}greet time <duration>\` / \`/greet time\` → Set auto-delete time\n` +
+                `\`${PREFIX}greet reset\` / \`/greet reset\` → Remove all channels\n` +
+                `\`${PREFIX}greet clear\` / \`/greet clear\` → Reset everything\n` +
+                `\`${PREFIX}greet test\` / \`/greet test\` → Test greeting\n` +
+                `\`${PREFIX}greet stats\` / \`/greet stats\` → Show current settings\n` +
+                `Variables: {mention}, {username}`,
             },
             {
-              name: `🖼️ Profile Commands (Administrator Only)`,
+              name: '🖼️ Profile Commands (Administrator Only)',
               value:
-                `\`${PREFIX}setavatar <url>\` → Set server avatar\n` +
-                `\`${PREFIX}setbanner <url>\` → Set server banner\n` +
-                `\`${PREFIX}resetprofile\` → Reset server profile`,
-            }
+                `\`${PREFIX}setavatar <url>\` / \`/setavatar\` → Set server avatar\n` +
+                `\`${PREFIX}setbanner <url>\` / \`/setbanner\` → Set server banner\n` +
+                `\`${PREFIX}resetprofile\` / \`/resetprofile\` → Reset server profile`,
+            },
           );
 
         return message.reply({ embeds: [helpEmbed] });

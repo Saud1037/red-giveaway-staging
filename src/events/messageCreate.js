@@ -301,21 +301,21 @@ function registerMessageCreate(client) {
             {
               name: '👋 greet',
               value:
-                `\`${PREFIX}greet\` / \`/greet toggle\` → Add/remove greeting channel\n` +
-                `\`${PREFIX}greet set <message>\` / \`/greet set\` → Set custom greeting\n` +
-                `\`${PREFIX}greet time <duration>\` / \`/greet time\` → Set auto-delete time\n` +
-                `\`${PREFIX}greet reset\` / \`/greet reset\` → Remove all channels\n` +
-                `\`${PREFIX}greet clear\` / \`/greet clear\` → Reset everything\n` +
-                `\`${PREFIX}greet test\` / \`/greet test\` → Test greeting\n` +
-                `\`${PREFIX}greet stats\` / \`/greet stats\` → Show current settings\n` +
+                `\`${PREFIX}greet\` | \`/greet toggle\` → Add/remove greeting channel\n` +
+                `\`${PREFIX}greet set <message>\` | \`/greet set\` → Set custom greeting\n` +
+                `\`${PREFIX}greet time <duration>\` | \`/greet time\` → Set auto-delete time\n` +
+                `\`${PREFIX}greet reset\` | \`/greet reset\` → Remove all channels\n` +
+                `\`${PREFIX}greet clear\` | \`/greet clear\` → Reset everything\n` +
+                `\`${PREFIX}greet test\` | \`/greet test\` → Test greeting\n` +
+                `\`${PREFIX}greet stats\` | \`/greet stats\` → Show current settings\n` +
                 `Variables: {mention}, {username}`,
             },
             {
               name: '🖼️ Profile Commands (Administrator Only)',
               value:
-                `\`${PREFIX}setavatar <url>\` / \`/setavatar\` → Set server avatar\n` +
-                `\`${PREFIX}setbanner <url>\` / \`/setbanner\` → Set server banner\n` +
-                `\`${PREFIX}resetprofile\` / \`/resetprofile\` → Reset server profile`,
+                `\`${PREFIX}setavatar <url>\` | \`/setavatar\` → Set server avatar\n` +
+                `\`${PREFIX}setbanner <url>\` | \`/setbanner\` → Set server banner\n` +
+                `\`${PREFIX}resetprofile\` | \`/resetprofile\` → Reset server profile`,
             },
           );
 

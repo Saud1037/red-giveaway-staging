@@ -18,11 +18,13 @@ const { registerGuildMemberAdd } = require('./events/guildMemberAdd');
 const { registerMessageCreate } = require('./events/messageCreate');
 const { registerMessageReactionAdd } = require('./events/messageReactionAdd');
 const { registerMessageReactionRemove } = require('./events/messageReactionRemove');
+const { registerInteractionCreate } = require('./events/interactionCreate');
 
 registerEvents(client);
 registerGuildMemberAdd(client);
 registerMessageCreate(client);
 registerMessageReactionAdd(client);
 registerMessageReactionRemove(client);
+registerInteractionCreate(client);
 
 client.login(process.env.DISCORD_TOKEN);

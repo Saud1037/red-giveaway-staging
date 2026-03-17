@@ -141,17 +141,6 @@ function registerInteractionCreate(client) {
          📢 PUBLIC / SEMI-PUBLIC
          ========================= */
 
-      if (commandName === 'bothealth') {
-        const embed = new EmbedBuilder()
-          .setTitle('✅ Bot Health').setColor('#00ff00')
-          .addFields(
-            { name: 'Ping', value: `${Math.round(client.ws.ping)}ms`, inline: true },
-            { name: 'Uptime', value: `${Math.floor(process.uptime() / 60)} min`, inline: true },
-            { name: 'Active Giveaways', value: `${Object.keys(store.giveaways).length}`, inline: true }
-          );
-        return interaction.reply({ embeds: [embed] });
-      }
-
       if (commandName === 'botinvite') {
         const invite = `https://discord.com/oauth2/authorize?client_id=${client.user.id}&permissions=274877990912&scope=bot`;
         return interaction.reply(`🔗 **Invite the bot:**\n${invite}`);
@@ -228,7 +217,7 @@ function registerInteractionCreate(client) {
 
         const giveawayMessage = await interaction.channel.send({ embeds: [embed] });
         await giveawayMessage.react('🎉');
-        await interaction.editReply('✅ Giveaway started!');
+        await interaction.deleteReply();
 
         store.giveaways[giveawayId] = {
           id: giveawayId,
@@ -255,7 +244,7 @@ function registerInteractionCreate(client) {
         const giveawayId = Object.keys(store.giveaways).find(id => store.giveaways[id].messageId === messageId);
         if (!giveawayId) return interaction.editReply('❌ No active giveaway found.');
         await endGiveaway(client, giveawayId);
-        return interaction.editReply('✅ Giveaway ended successfully!');
+        return interaction.deleteReply();
       }
 
       if (commandName === 'glist') {
@@ -291,7 +280,7 @@ function registerInteractionCreate(client) {
         const newWinners = selectWinners(giveaway.participants, giveaway.winners);
         const mentions = newWinners.map(id => `<@${id}>`).join(', ');
         await interaction.channel.send(`🔄 Congratulations ${mentions}! You are the new winners of **${giveaway.prize}**!`);
-        return interaction.editReply('✅ Rerolled!');
+        return interaction.deleteReply();
       }
 
       /* =========================

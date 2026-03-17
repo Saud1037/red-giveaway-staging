@@ -61,7 +61,6 @@ const commands = [
     .setDescription('Reset the bot server avatar and banner'),
 
   // ─── Bot Info ───
-  new SlashCommandBuilder().setName('bothealth').setDescription('Show bot health status'),
   new SlashCommandBuilder().setName('botinvite').setDescription('Get the bot invite link'),
   new SlashCommandBuilder().setName('help').setDescription('Show all available commands'),
 ].map(c => c.toJSON());

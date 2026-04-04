@@ -30,6 +30,9 @@ async function endGiveaway(client, giveawayId) {
   const giveaway = store.giveaways[giveawayId];
   if (!giveaway) return;
 
+  // احذف فوراً من الـ store كطبقة حماية ثانية ضد التكرار
+  delete store.giveaways[giveawayId];
+
   try {
     const channel = await client.channels.fetch(giveaway.channelId);
     const message = await channel.messages.fetch(giveaway.messageId);
@@ -45,19 +48,23 @@ async function endGiveaway(client, giveawayId) {
       const winnerMentions = winners.map(id => `<@${id}>`).join(', ');
       embed
         .setTitle(`${giveaway.prize}`)
-        .setDescription(`🔔 Winner(s): ${winnerMentions}
-⚙️ Ending: Ended
-↕️ Hosted by: <@${giveaway.hostId}>`)
-        .setFooter({ text: `1` });
+        .setDescription(
+          `🔔 Winner(s): ${winnerMentions}\n` +
+          `⚙️ Ending: Ended\n` +
+          `↕️ Hosted by: <@${giveaway.hostId}>`
+        )
+        .setFooter({ text: `🏆 Winners: ${giveaway.winners}` });
 
       await channel.send(`🎊 Congratulations ${winnerMentions}! You won **${giveaway.prize}**! 🎉`);
     } else {
       embed
         .setTitle(`🎉 ${giveaway.prize} 🎉`)
-        .setDescription(`🔔 Winner(s): No valid entries
-⚙️ Ending: Ended
-↕️ Hosted by: <@${giveaway.hostId}>`)
-        .setFooter({ text: `1` });
+        .setDescription(
+          `🔔 Winner(s): No valid entries\n` +
+          `⚙️ Ending: Ended\n` +
+          `↕️ Hosted by: <@${giveaway.hostId}>`
+        )
+        .setFooter({ text: `🏆 Winners: ${giveaway.winners}` });
     }
 
     await message.edit({ embeds: [embed] });
@@ -70,8 +77,9 @@ async function endGiveaway(client, giveawayId) {
     if (error) console.error('Error saving ended giveaway:', error);
 
     await deleteGiveaway(giveawayId);
-    delete store.giveaways[giveawayId];
   } catch (error) {
+    // لو صار خطأ، نرجع القيفاوي للـ store حتى يحاول مرة ثانية
+    store.giveaways[giveawayId] = giveaway;
     console.error('Error ending giveaway:', error);
   }
 }

@@ -9,11 +9,17 @@ function registerEvents(client) {
     await loadGiveaways();
     await loadGreetSettings();
 
+    const endingGiveaways = new Set();
+
     setInterval(() => {
       const now = Date.now();
       for (const [giveawayId, giveaway] of Object.entries(store.giveaways)) {
         if (now >= new Date(giveaway.endtime).getTime()) {
-          endGiveaway(client, giveawayId);
+          if (endingGiveaways.has(giveawayId)) continue;
+          endingGiveaways.add(giveawayId);
+          endGiveaway(client, giveawayId).finally(() => {
+            endingGiveaways.delete(giveawayId);
+          });
         }
       }
     }, 5000);

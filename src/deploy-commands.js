@@ -8,7 +8,8 @@ const commands = [
     .setDescription('Start a new giveaway')
     .addStringOption(o => o.setName('time').setDescription('Duration (e.g. 1h, 30m, 1d)').setRequired(true))
     .addIntegerOption(o => o.setName('winners').setDescription('Number of winners').setRequired(true).setMinValue(1))
-    .addStringOption(o => o.setName('prize').setDescription('Giveaway prize').setRequired(true)),
+    .addStringOption(o => o.setName('prize').setDescription('Giveaway prize').setRequired(true))
+    .addBooleanOption(o => o.setName('luck').setDescription('Enable extra luck for lucky roles? (default: true)').setRequired(false)),
 
   new SlashCommandBuilder()
     .setName('gend')
@@ -24,6 +25,25 @@ const commands = [
     .setName('greroll')
     .setDescription('Reroll winners for an ended giveaway')
     .addStringOption(o => o.setName('message_id').setDescription('Giveaway message ID').setRequired(true)),
+
+  // ─── Extra Luck ───
+  new SlashCommandBuilder()
+    .setName('gluck')
+    .setDescription('Manage extra luck roles for giveaways')
+    .addSubcommand(s =>
+      s.setName('add')
+        .setDescription('Add a role with a luck multiplier')
+        .addRoleOption(o => o.setName('role').setDescription('The role to boost').setRequired(true))
+        .addNumberOption(o => o.setName('multiplier').setDescription('Luck multiplier (1.5 - 10)').setRequired(true).setMinValue(1.1).setMaxValue(10))
+    )
+    .addSubcommand(s =>
+      s.setName('remove')
+        .setDescription('Remove a luck role')
+        .addRoleOption(o => o.setName('role').setDescription('The role to remove').setRequired(true))
+    )
+    .addSubcommand(s => s.setName('list').setDescription('Show all luck roles and their multipliers'))
+    .addSubcommand(s => s.setName('clear').setDescription('Remove all luck roles'))
+    .addSubcommand(s => s.setName('me').setDescription('Check your current luck multiplier')),
 
   // ─── Greet ───
   new SlashCommandBuilder()

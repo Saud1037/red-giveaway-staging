@@ -1,6 +1,7 @@
 const store = require('../store');
 const { loadGiveaways, endGiveaway } = require('../services/giveawayService');
 const { loadGreetSettings } = require('../services/greetService');
+const { loadLuckSettings } = require('../services/luckService');
 
 function registerEvents(client) {
   client.once('ready', async () => {
@@ -8,6 +9,9 @@ function registerEvents(client) {
 
     await loadGiveaways();
     await loadGreetSettings();
+    await loadLuckSettings();
+
+    const endingGiveaways = new Set();
 
     const endingGiveaways = new Set();
 

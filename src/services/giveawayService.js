@@ -6,9 +6,14 @@ const { buildWeightedPool } = require('../services/luckService');
 
 async function loadGiveaways() {
   const { data, error } = await supabase.from('giveaways').select('*');
-  if (error) { console.error('Error loading giveaways:', error); return; }
+  if (error) {
+    console.error('Error loading giveaways:', error);
+    return;
+  }
   store.giveaways = {};
-  data.forEach(g => { store.giveaways[g.id] = g; });
+  data.forEach(g => {
+    store.giveaways[g.id] = g;
+  });
 }
 
 async function saveGiveaway(giveaway) {
@@ -36,7 +41,6 @@ async function endGiveaway(client, giveawayId) {
     let winners = [];
 
     if (giveaway.participants.length > 0) {
-      // ─── بناء pool مرجّح إذا الـ luck مفعّل ───
       const luckEnabled = giveaway.luckEnabled ?? true;
       let pool;
 
@@ -53,15 +57,18 @@ async function endGiveaway(client, giveawayId) {
       }
     }
 
-    const embed = new EmbedBuilder().setColor('#FF0000').setTimestamp();
-
     // ─── بناء نص الرتب المحظوظة ───
     const luckRoles = store.luckSettings?.[giveaway.guildId];
     let luckLine = '';
     if (luckRoles && Object.keys(luckRoles).length && (giveaway.luckEnabled ?? true)) {
-      const roleTexts = Object.entries(luckRoles).map(([id, w]) => `<@&${id}> (×${w})`).join(', ');
+      const roleTexts = Object.entries(luckRoles)
+        .sort((a, b) => b[1] - a[1])
+        .map(([id, w]) => `<@&${id}> (×${w})`)
+        .join(', ');
       luckLine = `\n🍀 Lucky Roles: ${roleTexts}`;
     }
+
+    const embed = new EmbedBuilder().setColor('#FF0000').setTimestamp();
 
     if (winners.length > 0) {
       const winnerMentions = winners.map(id => `<@${id}>`).join(', ');

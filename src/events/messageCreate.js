@@ -6,9 +6,7 @@ const os = require('os');
 const { endGiveaway, saveGiveaway } = require('../services/giveawayService');
 const { saveGreetSettings, scheduleGreetMessageDeletion } = require('../services/greetService');
 const { handleSetAvatar, handleSetBanner, handleResetProfile } = require('../services/profileService');
-const {
-  saveLuckRole, deleteLuckRole, clearLuckSettings, getMemberWeight, MAX_WEIGHT,
-} = require('../services/luckService');
+const { saveLuckRole, deleteLuckRole, clearLuckSettings, getMemberWeight, MAX_WEIGHT } = require('../services/luckService');
 
 const { parseTime, formatTimeLeft } = require('../utils/time');
 const { selectWinners } = require('../utils/winners');
@@ -28,37 +26,38 @@ function registerMessageCreate(client) {
 
       const isOwner = OWNER_ID && message.author.id === OWNER_ID;
 
-      /* =========================
-         🔐 OWNER-ONLY COMMANDS
-         ========================= */
+      // ─── OWNER ONLY ───
 
       if (command === 'botservers') {
         if (!isOwner) return;
         return message.reply(`🌐 **Total Servers:** ${client.guilds.cache.size}`);
       }
 
-      else if (command === 'botserverlist') {
+      if (command === 'botserverlist') {
         if (!isOwner) return;
         const servers = client.guilds.cache
           .map(g => `• **${g.name}** | ID: \`${g.id}\` | Members: **${g.memberCount}**`)
           .sort((a, b) => a.localeCompare(b));
         let buffer = `📌 **Bot Servers (${servers.length})**\n\n`;
         for (const line of servers) {
-          if ((buffer + line + '\n').length > 1800) { await message.reply(buffer); buffer = ''; }
+          if ((buffer + line + '\n').length > 1800) {
+            await message.reply(buffer);
+            buffer = '';
+          }
           buffer += line + '\n';
         }
         if (buffer.trim()) await message.reply(buffer);
         return;
       }
 
-      else if (command === 'botmembers') {
+      if (command === 'botmembers') {
         if (!isOwner) return;
         let total = 0;
         client.guilds.cache.forEach(g => total += g.memberCount);
         return message.reply(`👥 **Total Members:** ${total}`);
       }
 
-      else if (command === 'botserverfind') {
+      if (command === 'botserverfind') {
         if (!isOwner) return;
         const query = args.join(' ').trim();
         if (!query) return message.reply(`❌ Usage: \`${PREFIX}botserverfind <name or server_id>\``);
@@ -72,22 +71,19 @@ function registerMessageCreate(client) {
         return message.reply(`🔎 Results (max 10):\n${results.join('\n')}`);
       }
 
-      else if (command === 'botping') {
+      if (command === 'botping') {
         if (!isOwner) return;
         const sent = await message.reply('🏓 Pinging...');
         return sent.edit(`🏓 **Pong!**\n• Message latency: **${sent.createdTimestamp - message.createdTimestamp}ms**\n• API latency: **${Math.round(client.ws.ping)}ms**`);
       }
 
-      if (command === 'botinvite') {
-        const invite = `https://discord.com/oauth2/authorize?client_id=${client.user.id}&permissions=274877990912&scope=bot`;
-        return message.reply(`🔗 **Invite the bot:**\n${invite}`);
-      }
-
-      else if (command === 'botstats') {
+      if (command === 'botstats') {
         if (!isOwner) return;
         let totalMembers = 0;
         client.guilds.cache.forEach(g => totalMembers += g.memberCount);
-        const embed = new EmbedBuilder().setTitle('🤖 Bot Stats').setColor('#5865F2')
+        const embed = new EmbedBuilder()
+          .setTitle('🤖 Bot Stats')
+          .setColor('#5865F2')
           .addFields(
             { name: 'Servers', value: `${client.guilds.cache.size}`, inline: true },
             { name: 'Members', value: `${totalMembers}`, inline: true },
@@ -98,28 +94,32 @@ function registerMessageCreate(client) {
         return message.reply({ embeds: [embed] });
       }
 
-      else if (command === 'botuptime') {
+      if (command === 'botuptime') {
         if (!isOwner) return;
         const ms = process.uptime() * 1000;
-        const d = Math.floor(ms / 86400000), h = Math.floor((ms % 86400000) / 3600000), m = Math.floor((ms % 3600000) / 60000);
+        const d = Math.floor(ms / 86400000);
+        const h = Math.floor((ms % 86400000) / 3600000);
+        const m = Math.floor((ms % 3600000) / 60000);
         return message.reply(`⏱️ **Uptime:** ${d}d ${h}h ${m}m`);
       }
 
-      else if (command === 'botmemory') {
+      if (command === 'botmemory') {
         if (!isOwner) return;
         const used = process.memoryUsage().rss / 1024 / 1024;
         const total = os.totalmem() / 1024 / 1024;
         return message.reply(`🧠 **Memory:** ${used.toFixed(1)} MB / ${total.toFixed(0)} MB`);
       }
 
-      else if (command === 'botcpu') {
+      if (command === 'botcpu') {
         if (!isOwner) return;
         const cpus = os.cpus();
         return message.reply(`🖥️ **CPU:** ${cpus[0]?.model || 'Unknown'} | Cores: **${cpus.length}**`);
       }
 
-      else if (command === 'bothealth') {
-        const embed = new EmbedBuilder().setTitle('✅ Bot Health').setColor('#00ff00')
+      if (command === 'bothealth') {
+        const embed = new EmbedBuilder()
+          .setTitle('✅ Bot Health')
+          .setColor('#00ff00')
           .addFields(
             { name: 'Ping', value: `${Math.round(client.ws.ping)}ms`, inline: true },
             { name: 'Uptime', value: `${Math.floor(process.uptime() / 60)} min`, inline: true },
@@ -128,48 +128,58 @@ function registerMessageCreate(client) {
         return message.reply({ embeds: [embed] });
       }
 
-      /* =========================
-         🖼️ PROFILE COMMANDS
-         ========================= */
+      // ─── PUBLIC ───
 
-      else if (command === 'setavatar') {
-        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator))
+      if (command === 'botinvite') {
+        const invite = `https://discord.com/oauth2/authorize?client_id=${client.user.id}&permissions=274877990912&scope=bot`;
+        return message.reply(`🔗 **Invite the bot:**\n${invite}`);
+      }
+
+      // ─── PROFILE ───
+
+      if (command === 'setavatar') {
+        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
           return message.reply('❌ You need Administrator permission.');
+        }
         return handleSetAvatar(message, args);
       }
 
-      else if (command === 'setbanner') {
-        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator))
+      if (command === 'setbanner') {
+        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
           return message.reply('❌ You need Administrator permission.');
+        }
         return handleSetBanner(message, args);
       }
 
-      else if (command === 'resetprofile') {
-        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator))
+      if (command === 'resetprofile') {
+        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
           return message.reply('❌ You need Administrator permission.');
+        }
         return handleResetProfile(message);
       }
 
-      /* =========================
-         🎉 GIVEAWAY COMMANDS
-         ========================= */
+      // ─── GIVEAWAY ───
 
-      // !gstart <time> <winners> <prize> [luck:on/off]
       if (command === 'gstart') {
-        if (!message.member.permissions.has(PermissionsBitField.Flags.ManageEvents))
+        if (!message.member.permissions.has(PermissionsBitField.Flags.ManageEvents)) {
           return message.reply('❌ You need Manage Events permission.');
-        if (args.length < 3)
+        }
+        if (args.length < 3) {
           return message.reply(`❌ Usage: \`${PREFIX}gstart <time> <winners_count> <prize> [luck:on/off]\``);
+        }
 
         const timeArg = args[0];
         const winnersCount = parseInt(args[1]);
 
-        // ─── تحقق من آخر arg إذا فيه luck:on أو luck:off ───
         const lastArg = args[args.length - 1].toLowerCase();
         let luckEnabled = true;
         let prizeArgs = args.slice(2);
-        if (lastArg === 'luck:off') { luckEnabled = false; prizeArgs = args.slice(2, -1); }
-        else if (lastArg === 'luck:on') { prizeArgs = args.slice(2, -1); }
+        if (lastArg === 'luck:off') {
+          luckEnabled = false;
+          prizeArgs = args.slice(2, -1);
+        } else if (lastArg === 'luck:on') {
+          prizeArgs = args.slice(2, -1);
+        }
         const prize = prizeArgs.join(' ');
 
         const duration = parseTime(timeArg);
@@ -182,16 +192,19 @@ function registerMessageCreate(client) {
         const giveawayId = Date.now().toString();
         const endTime = new Date(Date.now() + duration).toISOString();
 
-        // ─── بناء نص الرتب المحظوظة ───
         const luckRoles = store.luckSettings?.[message.guild.id];
         let luckLine = '';
         if (luckEnabled && luckRoles && Object.keys(luckRoles).length) {
-          const roleTexts = Object.entries(luckRoles).map(([id, w]) => `<@&${id}> (×${w})`).join(', ');
+          const roleTexts = Object.entries(luckRoles)
+            .sort((a, b) => b[1] - a[1])
+            .map(([id, w]) => `<@&${id}> (×${w})`)
+            .join(', ');
           luckLine = `\n🍀 Lucky Roles: ${roleTexts}`;
         }
 
         const embed = new EmbedBuilder()
-          .setTitle(`${prize}`).setColor('#FFFF00')
+          .setTitle(`${prize}`)
+          .setColor('#FFFF00')
           .setDescription(
             `🔔 React with 🎉 to enter!\n` +
             `⚙️ Ending: <t:${Math.floor((Date.now() + duration) / 1000)}:R>\n` +
@@ -221,16 +234,28 @@ function registerMessageCreate(client) {
         return;
       }
 
-      // !help
-      else if (command === 'help') {
+      if (command === 'help') {
         const embed = new EmbedBuilder()
-          .setTitle('🎉 Giveaway Bot - Commands').setColor('#FF0000')
+          .setTitle('🎉 Giveaway Bot - Commands')
+          .setColor('#FF0000')
           .setDescription('All available giveaway bot commands:')
           .addFields(
-            { name: '🚀 gstart', value: `\`${PREFIX}gstart <time> <winners> <prize> [luck:on/off]\`\n\`/gstart\`\nStart a new giveaway` },
-            { name: '🗑️ gend', value: `\`${PREFIX}gend <message_id>\`\n\`/gend\`\nEnd a giveaway manually` },
-            { name: '📋 glist', value: `\`${PREFIX}glist\`\n\`/glist\`\nShow list of active giveaways` },
-            { name: '🔄 greroll', value: `\`${PREFIX}greroll <message_id>\`\n\`/greroll\`\nReroll winners` },
+            {
+              name: '🚀 gstart',
+              value: `\`${PREFIX}gstart <time> <winners> <prize> [luck:on/off]\`\n\`/gstart\`\nStart a new giveaway`,
+            },
+            {
+              name: '🗑️ gend',
+              value: `\`${PREFIX}gend <message_id>\`\n\`/gend\`\nEnd a giveaway manually`,
+            },
+            {
+              name: '📋 glist',
+              value: `\`${PREFIX}glist\`\n\`/glist\`\nShow list of active giveaways`,
+            },
+            {
+              name: '🔄 greroll',
+              value: `\`${PREFIX}greroll <message_id>\`\n\`/greroll\`\nReroll winners`,
+            },
             {
               name: '🍀 gluck',
               value:
@@ -255,10 +280,10 @@ function registerMessageCreate(client) {
         return message.reply({ embeds: [embed] });
       }
 
-      // !gend
-      else if (command === 'gend') {
-        if (!message.member.permissions.has(PermissionsBitField.Flags.ManageEvents))
+      if (command === 'gend') {
+        if (!message.member.permissions.has(PermissionsBitField.Flags.ManageEvents)) {
           return message.reply('❌ Permission needed');
+        }
         if (!args[0]) return message.reply(`❌ Usage: \`${PREFIX}gend <message_id>\``);
         const giveawayId = Object.keys(store.giveaways).find(id => store.giveaways[id].messageId === args[0]);
         if (!giveawayId) return message.reply('❌ No active giveaway found');
@@ -266,8 +291,7 @@ function registerMessageCreate(client) {
         return message.reply('✅ Giveaway ended successfully!');
       }
 
-      // !glist
-      else if (command === 'glist') {
+      if (command === 'glist') {
         const pageSize = 10;
         const page = parseInt(args[0]) || 1;
         const active = Object.values(store.giveaways).filter(g => g.guildId === message.guild.id);
@@ -275,11 +299,17 @@ function registerMessageCreate(client) {
         const totalPages = Math.ceil(active.length / pageSize);
         if (page < 1 || page > totalPages) return message.reply(`❌ Invalid page. Choose between 1 and ${totalPages}`);
         const slice = active.slice((page - 1) * pageSize, page * pageSize);
-        const embed = new EmbedBuilder().setTitle(`📋 Active Giveaways (Page ${page}/${totalPages})`).setColor('#0099ff');
+        const embed = new EmbedBuilder()
+          .setTitle(`📋 Active Giveaways (Page ${page}/${totalPages})`)
+          .setColor('#0099ff');
         slice.forEach((g, i) => {
           const timeLeft = formatTimeLeft(new Date(g.endtime).getTime() - Date.now());
           const luckTag = g.luckEnabled ? ' 🍀' : '';
-          embed.addFields({ name: `${(page - 1) * pageSize + i + 1}. ${g.prize}${luckTag}`, value: `**Winners:** ${g.winners}\n**Time Left:** ${timeLeft}\n**ID:** ${g.messageId}`, inline: false });
+          embed.addFields({
+            name: `${(page - 1) * pageSize + i + 1}. ${g.prize}${luckTag}`,
+            value: `**Winners:** ${g.winners}\n**Time Left:** ${timeLeft}\n**ID:** ${g.messageId}`,
+            inline: false,
+          });
         });
         let footerText = `Page ${page}/${totalPages}`;
         if (page < totalPages) footerText = `Next ➡ ${PREFIX}glist ${page + 1} | ${footerText}`;
@@ -287,10 +317,10 @@ function registerMessageCreate(client) {
         return message.reply({ embeds: [embed] });
       }
 
-      // !greroll
-      else if (command === 'greroll') {
-        if (!message.member.permissions.has(PermissionsBitField.Flags.ManageEvents))
+      if (command === 'greroll') {
+        if (!message.member.permissions.has(PermissionsBitField.Flags.ManageEvents)) {
           return message.reply('❌ Permission needed');
+        }
         if (!args[0]) return message.reply(`❌ Usage: \`${PREFIX}greroll <message_id>\``);
         const { data, error } = await supabase.from('ended_giveaways').select('*').eq('messageId', args[0]);
         if (error || !data?.length) return message.reply('❌ No ended giveaway found');
@@ -300,21 +330,20 @@ function registerMessageCreate(client) {
         return message.channel.send(`🔄 Congratulations ${newWinners.map(id => `<@${id}>`).join(', ')}! You are the new winners of **${giveaway.prize}**!`);
       }
 
-      /* =========================
-         🍀 GLUCK COMMANDS
-         ========================= */
+      // ─── GLUCK ───
 
-      else if (command === 'gluck') {
+      if (command === 'gluck') {
         const sub = args[0]?.toLowerCase();
 
-        // !gluck me — أي شخص
         if (sub === 'me') {
           const weight = getMemberWeight(message.member, message.guild.id);
           const luckRoles = store.luckSettings?.[message.guild.id] || {};
           const myRoles = Object.entries(luckRoles)
             .filter(([id]) => message.member.roles.cache.has(id))
             .map(([id, w]) => `<@&${id}> (×${w})`);
-          const embed = new EmbedBuilder().setTitle('🍀 Your Luck').setColor('#00ff88')
+          const embed = new EmbedBuilder()
+            .setTitle('🍀 Your Luck')
+            .setColor('#00ff88')
             .addFields(
               { name: 'Total Multiplier', value: `×${weight}`, inline: true },
               { name: 'Max Possible', value: `×${MAX_WEIGHT}`, inline: true },
@@ -323,20 +352,21 @@ function registerMessageCreate(client) {
           return message.reply({ embeds: [embed] });
         }
 
-        // بقية الأوامر تحتاج Manage Events
-        if (!message.member.permissions.has(PermissionsBitField.Flags.ManageEvents))
+        if (!message.member.permissions.has(PermissionsBitField.Flags.ManageEvents)) {
           return message.reply('❌ You need Manage Events permission.');
+        }
 
         if (!store.luckSettings[message.guild.id]) store.luckSettings[message.guild.id] = {};
 
-        // !gluck add <@role> <multiplier>
         if (sub === 'add') {
           const roleId = args[1]?.replace(/[<@&>]/g, '');
           const multiplier = parseFloat(args[2]);
-          if (!roleId || isNaN(multiplier))
+          if (!roleId || isNaN(multiplier)) {
             return message.reply(`❌ Usage: \`${PREFIX}gluck add <@role> <multiplier>\` (e.g. 1.5 - 10)`);
-          if (multiplier < 1.1 || multiplier > MAX_WEIGHT)
+          }
+          if (multiplier < 1.1 || multiplier > MAX_WEIGHT) {
             return message.reply(`❌ Multiplier must be between 1.1 and ${MAX_WEIGHT}`);
+          }
           const role = message.guild.roles.cache.get(roleId);
           if (!role) return message.reply('❌ Role not found.');
           store.luckSettings[message.guild.id][roleId] = multiplier;
@@ -344,53 +374,55 @@ function registerMessageCreate(client) {
           return message.reply(`✅ <@&${roleId}> will now have **×${multiplier}** luck in giveaways!`);
         }
 
-        // !gluck remove <@role>
         if (sub === 'remove') {
           const roleId = args[1]?.replace(/[<@&>]/g, '');
           if (!roleId) return message.reply(`❌ Usage: \`${PREFIX}gluck remove <@role>\``);
-          if (!store.luckSettings[message.guild.id]?.[roleId])
+          if (!store.luckSettings[message.guild.id]?.[roleId]) {
             return message.reply('❌ This role has no luck bonus.');
+          }
           delete store.luckSettings[message.guild.id][roleId];
           await deleteLuckRole(message.guild.id, roleId);
           return message.reply(`✅ Removed luck bonus from <@&${roleId}>.`);
         }
 
-        // !gluck list
         if (sub === 'list') {
           const roles = store.luckSettings[message.guild.id] || {};
           if (!Object.keys(roles).length) return message.reply('📋 No lucky roles set up for this server.');
-          const embed = new EmbedBuilder().setTitle('🍀 Lucky Roles').setColor('#00ff88');
-          const lines = Object.entries(roles).sort((a, b) => b[1] - a[1]).map(([id, w]) => `<@&${id}> → **×${w}**`);
+          const embed = new EmbedBuilder()
+            .setTitle('🍀 Lucky Roles')
+            .setColor('#00ff88');
+          const lines = Object.entries(roles)
+            .sort((a, b) => b[1] - a[1])
+            .map(([id, w]) => `<@&${id}> → **×${w}**`);
           embed.setDescription(lines.join('\n'));
           embed.setFooter({ text: `Max multiplier cap: ×${MAX_WEIGHT}` });
           return message.reply({ embeds: [embed] });
         }
 
-        // !gluck clear
         if (sub === 'clear') {
           store.luckSettings[message.guild.id] = {};
           await clearLuckSettings(message.guild.id);
           return message.reply('✅ All lucky roles cleared.');
         }
 
-        return message.reply(
-          `❌ Unknown subcommand. Use: \`${PREFIX}gluck add/remove/list/clear/me\``
-        );
+        return message.reply(`❌ Unknown subcommand. Use: \`${PREFIX}gluck add/remove/list/clear/me\``);
       }
 
-      /* =========================
-         👋 GREET COMMANDS
-         ========================= */
+      // ─── GREET ───
 
-      else if (command === 'greet') {
-        if (!message.member.permissions.has(PermissionsBitField.Flags.ManageGuild))
+      if (command === 'greet') {
+        if (!message.member.permissions.has(PermissionsBitField.Flags.ManageGuild)) {
           return message.reply('❌ You need Manage Server permission.');
+        }
 
         const sub = args[0]?.toLowerCase();
 
         if (!store.greetSettings[message.guild.id]) {
           store.greetSettings[message.guild.id] = {
-            guild_id: message.guild.id, channels: [], message: 'Welcome {mention} 🎉', delete_time: 0,
+            guild_id: message.guild.id,
+            channels: [],
+            message: 'Welcome {mention} 🎉',
+            delete_time: 0,
           };
         }
 
@@ -446,8 +478,13 @@ function registerMessageCreate(client) {
           for (const channelId of settings.channels) {
             const channel = message.guild.channels.cache.get(channelId);
             if (!channel) continue;
-            try { const sent = await channel.send(testMessage); scheduleGreetMessageDeletion(sent, settings.delete_time); sentCount++; }
-            catch (e) { console.error('Test greet error:', e); }
+            try {
+              const sent = await channel.send(testMessage);
+              scheduleGreetMessageDeletion(sent, settings.delete_time);
+              sentCount++;
+            } catch (e) {
+              console.error('Test greet error:', e);
+            }
           }
           return message.reply(`✅ Test greeting sent to ${sentCount} channel(s)!`);
         }
@@ -456,7 +493,9 @@ function registerMessageCreate(client) {
           const embed = new EmbedBuilder().setTitle('👋 Greeting Settings').setColor('#00ff00');
           const validChannels = (settings.channels || [])
             .map(id => message.guild.channels.cache.get(id))
-            .filter(Boolean).map(ch => `<#${ch.id}>`).join(', ') || 'No channels';
+            .filter(Boolean)
+            .map(ch => `<#${ch.id}>`)
+            .join(', ') || 'No channels';
           embed.addFields(
             { name: 'Channels', value: validChannels },
             { name: 'Message', value: settings.message || 'Welcome {mention} 🎉' },

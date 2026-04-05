@@ -6,9 +6,7 @@ const os = require('os');
 const { endGiveaway, saveGiveaway } = require('../services/giveawayService');
 const { saveGreetSettings, scheduleGreetMessageDeletion } = require('../services/greetService');
 const { handleSetAvatar, handleSetBanner, handleResetProfile } = require('../services/profileService');
-const {
-  saveLuckRole, deleteLuckRole, clearLuckSettings, getMemberWeight, MAX_WEIGHT,
-} = require('../services/luckService');
+const { saveLuckRole, deleteLuckRole, clearLuckSettings, getMemberWeight, MAX_WEIGHT } = require('../services/luckService');
 
 const { parseTime, formatTimeLeft } = require('../utils/time');
 const { selectWinners } = require('../utils/winners');
@@ -43,9 +41,7 @@ function registerInteractionCreate(client) {
       const heavyCommands = ['gstart', 'gend', 'greroll', 'setavatar', 'setbanner', 'resetprofile'];
       if (heavyCommands.includes(commandName)) await interaction.deferReply();
 
-      /* =========================
-         🔐 OWNER-ONLY COMMANDS
-         ========================= */
+      // ─── OWNER ONLY ───
 
       if (commandName === 'botservers') {
         if (!isOwner) return interaction.reply({ content: '❌ Owner only.', ephemeral: true });
@@ -59,7 +55,10 @@ function registerInteractionCreate(client) {
           .sort((a, b) => a.localeCompare(b));
         let buffer = `📌 **Bot Servers (${servers.length})**\n\n`;
         for (const line of servers) {
-          if ((buffer + line + '\n').length > 1800) { await interaction.followUp(buffer); buffer = ''; }
+          if ((buffer + line + '\n').length > 1800) {
+            await interaction.followUp(buffer);
+            buffer = '';
+          }
           buffer += line + '\n';
         }
         return interaction.reply(buffer);
@@ -96,7 +95,9 @@ function registerInteractionCreate(client) {
         if (!isOwner) return interaction.reply({ content: '❌ Owner only.', ephemeral: true });
         let totalMembers = 0;
         client.guilds.cache.forEach(g => totalMembers += g.memberCount);
-        const embed = new EmbedBuilder().setTitle('🤖 Bot Stats').setColor('#5865F2')
+        const embed = new EmbedBuilder()
+          .setTitle('🤖 Bot Stats')
+          .setColor('#5865F2')
           .addFields(
             { name: 'Servers', value: `${client.guilds.cache.size}`, inline: true },
             { name: 'Members', value: `${totalMembers}`, inline: true },
@@ -110,7 +111,9 @@ function registerInteractionCreate(client) {
       if (commandName === 'botuptime') {
         if (!isOwner) return interaction.reply({ content: '❌ Owner only.', ephemeral: true });
         const ms = process.uptime() * 1000;
-        const d = Math.floor(ms / 86400000), h = Math.floor((ms % 86400000) / 3600000), m = Math.floor((ms % 3600000) / 60000);
+        const d = Math.floor(ms / 86400000);
+        const h = Math.floor((ms % 86400000) / 3600000);
+        const m = Math.floor((ms % 3600000) / 60000);
         return interaction.reply(`⏱️ **Uptime:** ${d}d ${h}h ${m}m`);
       }
 
@@ -127,9 +130,7 @@ function registerInteractionCreate(client) {
         return interaction.reply(`🖥️ **CPU:** ${cpus[0]?.model || 'Unknown'} | Cores: **${cpus.length}**`);
       }
 
-      /* =========================
-         📢 PUBLIC
-         ========================= */
+      // ─── PUBLIC ───
 
       if (commandName === 'botinvite') {
         const invite = `https://discord.com/oauth2/authorize?client_id=${client.user.id}&permissions=274877990912&scope=bot`;
@@ -139,13 +140,26 @@ function registerInteractionCreate(client) {
       if (commandName === 'help') {
         const P = PREFIX;
         const embed = new EmbedBuilder()
-          .setTitle('🎉 Giveaway Bot - Commands').setColor('#FF0000')
+          .setTitle('🎉 Giveaway Bot - Commands')
+          .setColor('#FF0000')
           .setDescription('All available giveaway bot commands:')
           .addFields(
-            { name: '🚀 gstart', value: `\`${P}gstart <time> <winners> <prize> [luck:on/off]\`\n\`/gstart\`\nStart a new giveaway` },
-            { name: '🗑️ gend', value: `\`${P}gend <message_id>\`\n\`/gend\`\nEnd a giveaway manually` },
-            { name: '📋 glist', value: `\`${P}glist\`\n\`/glist\`\nShow list of active giveaways` },
-            { name: '🔄 greroll', value: `\`${P}greroll <message_id>\`\n\`/greroll\`\nReroll winners` },
+            {
+              name: '🚀 gstart',
+              value: `\`${P}gstart <time> <winners> <prize> [luck:on/off]\`\n\`/gstart\`\nStart a new giveaway`,
+            },
+            {
+              name: '🗑️ gend',
+              value: `\`${P}gend <message_id>\`\n\`/gend\`\nEnd a giveaway manually`,
+            },
+            {
+              name: '📋 glist',
+              value: `\`${P}glist\`\n\`/glist\`\nShow list of active giveaways`,
+            },
+            {
+              name: '🔄 greroll',
+              value: `\`${P}greroll <message_id>\`\n\`/greroll\`\nReroll winners`,
+            },
             {
               name: '🍀 gluck',
               value:
@@ -177,20 +191,16 @@ function registerInteractionCreate(client) {
         return interaction.reply({ embeds: [embed] });
       }
 
-      /* =========================
-         🖼️ PROFILE COMMANDS
-         ========================= */
+      // ─── PROFILE ───
 
       if (commandName === 'setavatar') {
         if (!isAdmin) return interaction.editReply('❌ You need Administrator permission.');
-        const url = interaction.options.getString('url');
-        return handleSetAvatar(makeMessageAdapter(interaction), [url]);
+        return handleSetAvatar(makeMessageAdapter(interaction), [interaction.options.getString('url')]);
       }
 
       if (commandName === 'setbanner') {
         if (!isAdmin) return interaction.editReply('❌ You need Administrator permission.');
-        const url = interaction.options.getString('url');
-        return handleSetBanner(makeMessageAdapter(interaction), [url]);
+        return handleSetBanner(makeMessageAdapter(interaction), [interaction.options.getString('url')]);
       }
 
       if (commandName === 'resetprofile') {
@@ -198,13 +208,12 @@ function registerInteractionCreate(client) {
         return handleResetProfile(makeMessageAdapter(interaction));
       }
 
-      /* =========================
-         🎉 GIVEAWAY COMMANDS
-         ========================= */
+      // ─── GIVEAWAY ───
 
       if (commandName === 'gstart') {
-        if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageEvents))
+        if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageEvents)) {
           return interaction.editReply('❌ You need Manage Events permission.');
+        }
 
         const timeArg = interaction.options.getString('time');
         const winnersCount = interaction.options.getInteger('winners');
@@ -217,16 +226,19 @@ function registerInteractionCreate(client) {
         const giveawayId = Date.now().toString();
         const endTime = new Date(Date.now() + duration).toISOString();
 
-        // ─── بناء نص الرتب المحظوظة ───
         const luckRoles = store.luckSettings?.[interaction.guild.id];
         let luckLine = '';
         if (luckEnabled && luckRoles && Object.keys(luckRoles).length) {
-          const roleTexts = Object.entries(luckRoles).map(([id, w]) => `<@&${id}> (×${w})`).join(', ');
+          const roleTexts = Object.entries(luckRoles)
+            .sort((a, b) => b[1] - a[1])
+            .map(([id, w]) => `<@&${id}> (×${w})`)
+            .join(', ');
           luckLine = `\n🍀 Lucky Roles: ${roleTexts}`;
         }
 
         const embed = new EmbedBuilder()
-          .setTitle(`${prize}`).setColor('#FFFF00')
+          .setTitle(`${prize}`)
+          .setColor('#FFFF00')
           .setDescription(
             `🔔 React with 🎉 to enter!\n` +
             `⚙️ Ending: <t:${Math.floor((Date.now() + duration) / 1000)}:R>\n` +
@@ -258,8 +270,9 @@ function registerInteractionCreate(client) {
       }
 
       if (commandName === 'gend') {
-        if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageEvents))
+        if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageEvents)) {
           return interaction.editReply('❌ You need Manage Events permission.');
+        }
         const messageId = interaction.options.getString('message_id');
         const giveawayId = Object.keys(store.giveaways).find(id => store.giveaways[id].messageId === messageId);
         if (!giveawayId) return interaction.editReply('❌ No active giveaway found.');
@@ -275,18 +288,25 @@ function registerInteractionCreate(client) {
         const totalPages = Math.ceil(active.length / pageSize);
         if (page < 1 || page > totalPages) return interaction.reply(`❌ Invalid page. Choose between 1 and ${totalPages}`);
         const slice = active.slice((page - 1) * pageSize, page * pageSize);
-        const embed = new EmbedBuilder().setTitle(`📋 Active Giveaways (Page ${page}/${totalPages})`).setColor('#0099ff');
+        const embed = new EmbedBuilder()
+          .setTitle(`📋 Active Giveaways (Page ${page}/${totalPages})`)
+          .setColor('#0099ff');
         slice.forEach((g, i) => {
           const timeLeft = formatTimeLeft(new Date(g.endtime).getTime() - Date.now());
           const luckTag = g.luckEnabled ? ' 🍀' : '';
-          embed.addFields({ name: `${(page - 1) * pageSize + i + 1}. ${g.prize}${luckTag}`, value: `**Winners:** ${g.winners}\n**Time Left:** ${timeLeft}\n**ID:** ${g.messageId}`, inline: false });
+          embed.addFields({
+            name: `${(page - 1) * pageSize + i + 1}. ${g.prize}${luckTag}`,
+            value: `**Winners:** ${g.winners}\n**Time Left:** ${timeLeft}\n**ID:** ${g.messageId}`,
+            inline: false,
+          });
         });
         return interaction.reply({ embeds: [embed] });
       }
 
       if (commandName === 'greroll') {
-        if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageEvents))
+        if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageEvents)) {
           return interaction.editReply('❌ You need Manage Events permission.');
+        }
         const messageId = interaction.options.getString('message_id');
         const { data, error } = await supabase.from('ended_giveaways').select('*').eq('messageId', messageId);
         if (error || !data?.length) return interaction.editReply('❌ No ended giveaway found.');
@@ -298,22 +318,20 @@ function registerInteractionCreate(client) {
         return interaction.deleteReply();
       }
 
-      /* =========================
-         🍀 GLUCK COMMANDS
-         ========================= */
+      // ─── GLUCK ───
 
       if (commandName === 'gluck') {
         const sub = interaction.options.getSubcommand();
 
-        // ─── gluck me: أي شخص يقدر يستخدمه ───
         if (sub === 'me') {
           const weight = getMemberWeight(interaction.member, interaction.guild.id);
           const luckRoles = store.luckSettings?.[interaction.guild.id] || {};
           const myRoles = Object.entries(luckRoles)
             .filter(([id]) => interaction.member.roles.cache.has(id))
             .map(([id, w]) => `<@&${id}> (×${w})`);
-
-          const embed = new EmbedBuilder().setTitle('🍀 Your Luck').setColor('#00ff88')
+          const embed = new EmbedBuilder()
+            .setTitle('🍀 Your Luck')
+            .setColor('#00ff88')
             .addFields(
               { name: 'Total Multiplier', value: `×${weight}`, inline: true },
               { name: 'Max Possible', value: `×${MAX_WEIGHT}`, inline: true },
@@ -322,9 +340,9 @@ function registerInteractionCreate(client) {
           return interaction.reply({ embeds: [embed], ephemeral: true });
         }
 
-        // ─── بقية الأوامر تحتاج Manage Events ───
-        if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageEvents))
+        if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageEvents)) {
           return interaction.reply({ content: '❌ You need Manage Events permission.', ephemeral: true });
+        }
 
         if (!store.luckSettings[interaction.guild.id]) store.luckSettings[interaction.guild.id] = {};
 
@@ -338,8 +356,9 @@ function registerInteractionCreate(client) {
 
         if (sub === 'remove') {
           const role = interaction.options.getRole('role');
-          if (!store.luckSettings[interaction.guild.id]?.[role.id])
+          if (!store.luckSettings[interaction.guild.id]?.[role.id]) {
             return interaction.reply({ content: '❌ This role has no luck bonus.', ephemeral: true });
+          }
           delete store.luckSettings[interaction.guild.id][role.id];
           await deleteLuckRole(interaction.guild.id, role.id);
           return interaction.reply(`✅ Removed luck bonus from <@&${role.id}>.`);
@@ -347,9 +366,12 @@ function registerInteractionCreate(client) {
 
         if (sub === 'list') {
           const roles = store.luckSettings[interaction.guild.id] || {};
-          if (!Object.keys(roles).length)
+          if (!Object.keys(roles).length) {
             return interaction.reply('📋 No lucky roles set up for this server.');
-          const embed = new EmbedBuilder().setTitle('🍀 Lucky Roles').setColor('#00ff88');
+          }
+          const embed = new EmbedBuilder()
+            .setTitle('🍀 Lucky Roles')
+            .setColor('#00ff88');
           const lines = Object.entries(roles)
             .sort((a, b) => b[1] - a[1])
             .map(([id, w]) => `<@&${id}> → **×${w}**`);
@@ -365,19 +387,21 @@ function registerInteractionCreate(client) {
         }
       }
 
-      /* =========================
-         👋 GREET COMMANDS
-         ========================= */
+      // ─── GREET ───
 
       if (commandName === 'greet') {
-        if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageGuild))
+        if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageGuild)) {
           return interaction.reply({ content: '❌ You need Manage Server permission.', ephemeral: true });
+        }
 
         const sub = interaction.options.getSubcommand();
 
         if (!store.greetSettings[interaction.guild.id]) {
           store.greetSettings[interaction.guild.id] = {
-            guild_id: interaction.guild.id, channels: [], message: 'Welcome {mention} 🎉', delete_time: 0,
+            guild_id: interaction.guild.id,
+            channels: [],
+            message: 'Welcome {mention} 🎉',
+            delete_time: 0,
           };
         }
 
@@ -431,8 +455,13 @@ function registerInteractionCreate(client) {
           for (const channelId of settings.channels) {
             const channel = interaction.guild.channels.cache.get(channelId);
             if (!channel) continue;
-            try { const sent = await channel.send(testMessage); scheduleGreetMessageDeletion(sent, settings.delete_time); sentCount++; }
-            catch (e) { console.error('Test greet error:', e); }
+            try {
+              const sent = await channel.send(testMessage);
+              scheduleGreetMessageDeletion(sent, settings.delete_time);
+              sentCount++;
+            } catch (e) {
+              console.error('Test greet error:', e);
+            }
           }
           return interaction.reply(`✅ Test greeting sent to ${sentCount} channel(s)!`);
         }
@@ -441,7 +470,9 @@ function registerInteractionCreate(client) {
           const embed = new EmbedBuilder().setTitle('👋 Greeting Settings').setColor('#00ff00');
           const validChannels = (settings.channels || [])
             .map(id => interaction.guild.channels.cache.get(id))
-            .filter(Boolean).map(ch => `<#${ch.id}>`).join(', ') || 'No channels';
+            .filter(Boolean)
+            .map(ch => `<#${ch.id}>`)
+            .join(', ') || 'No channels';
           embed.addFields(
             { name: 'Channels', value: validChannels },
             { name: 'Message', value: settings.message || 'Welcome {mention} 🎉' },

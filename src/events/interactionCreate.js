@@ -9,6 +9,9 @@ const { handleSetAvatar, handleSetBanner, handleResetProfile } = require('../ser
 
 const { parseTime, formatTimeLeft } = require('../utils/time');
 const { selectWinners } = require('../utils/winners');
+const {
+  saveLuckRole, deleteLuckRole, clearLuckSettings, getMemberWeight, MAX_WEIGHT,
+} = require('../services/luckService');
 
 const OWNER_ID = (process.env.OWNER_ID || '').trim();
 const PREFIX = (process.env.PREFIX || '!').trim();
@@ -312,6 +315,69 @@ function registerInteractionCreate(client) {
         return interaction.deleteReply();
       }
 
+      /* =========================
+   🍀 GLUCK COMMANDS
+   ========================= */
+
+if (commandName === 'gluck') {
+  const sub = interaction.options.getSubcommand();
+
+  if (sub === 'me') {
+    const weight = getMemberWeight(interaction.member, interaction.guild.id);
+    const luckRoles = store.luckSettings?.[interaction.guild.id] || {};
+    const myRoles = Object.entries(luckRoles)
+      .filter(([id]) => interaction.member.roles.cache.has(id))
+      .map(([id, w]) => `<@&${id}> (×${w})`);
+    const embed = new EmbedBuilder().setTitle('🍀 Your Luck').setColor('#00ff88')
+      .addFields(
+        { name: 'Total Multiplier', value: `×${weight}`, inline: true },
+        { name: 'Max Possible', value: `×${MAX_WEIGHT}`, inline: true },
+        { name: 'Lucky Roles You Have', value: myRoles.length ? myRoles.join('\n') : 'None' }
+      );
+    return interaction.reply({ embeds: [embed], ephemeral: true });
+  }
+
+  if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageEvents))
+    return interaction.reply({ content: '❌ You need Manage Events permission.', ephemeral: true });
+
+  if (!store.luckSettings[interaction.guild.id]) store.luckSettings[interaction.guild.id] = {};
+
+  if (sub === 'add') {
+    const role = interaction.options.getRole('role');
+    const multiplier = interaction.options.getNumber('multiplier');
+    store.luckSettings[interaction.guild.id][role.id] = multiplier;
+    await saveLuckRole(interaction.guild.id, role.id, multiplier);
+    return interaction.reply(`✅ <@&${role.id}> will now have **×${multiplier}** luck in giveaways!`);
+  }
+
+  if (sub === 'remove') {
+    const role = interaction.options.getRole('role');
+    if (!store.luckSettings[interaction.guild.id]?.[role.id])
+      return interaction.reply({ content: '❌ This role has no luck bonus.', ephemeral: true });
+    delete store.luckSettings[interaction.guild.id][role.id];
+    await deleteLuckRole(interaction.guild.id, role.id);
+    return interaction.reply(`✅ Removed luck bonus from <@&${role.id}>.`);
+  }
+
+  if (sub === 'list') {
+    const roles = store.luckSettings[interaction.guild.id] || {};
+    if (!Object.keys(roles).length)
+      return interaction.reply('📋 No lucky roles set up for this server.');
+    const embed = new EmbedBuilder().setTitle('🍀 Lucky Roles').setColor('#00ff88');
+    const lines = Object.entries(roles)
+      .sort((a, b) => b[1] - a[1])
+      .map(([id, w]) => `<@&${id}> → **×${w}**`);
+    embed.setDescription(lines.join('\n'));
+    embed.setFooter({ text: `Max multiplier cap: ×${MAX_WEIGHT}` });
+    return interaction.reply({ embeds: [embed] });
+  }
+
+  if (sub === 'clear') {
+    store.luckSettings[interaction.guild.id] = {};
+    await clearLuckSettings(interaction.guild.id);
+    return interaction.reply('✅ All lucky roles cleared.');
+  }
+}
       /* =========================
          👋 GREET COMMANDS
          ========================= */

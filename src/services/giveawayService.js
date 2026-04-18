@@ -3,6 +3,7 @@ const supabase = require('../supabase');
 const store = require('../store');
 const { selectWinners } = require('../utils/winners');
 const { buildWeightedPool } = require('../services/luckService');
+const { incrementWins } = require('../services/leaderboardService');
 
 async function loadGiveaways() {
   const { data, error } = await supabase.from('giveaways').select('*');
@@ -83,6 +84,7 @@ async function endGiveaway(client, giveawayId) {
         .setFooter({ text: `🏆 Winners: ${giveaway.winners}` });
 
       await channel.send(`🎊 Congratulations ${winnerMentions}! You won **${giveaway.prize}**! 🎉`);
+      await incrementWins(giveaway.guildId, winners);
     } else {
       embed
         .setTitle(`🎉 ${giveaway.prize} 🎉`)

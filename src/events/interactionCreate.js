@@ -7,6 +7,7 @@ const { endGiveaway, saveGiveaway } = require('../services/giveawayService');
 const { saveGreetSettings, scheduleGreetMessageDeletion } = require('../services/greetService');
 const { handleSetAvatar, handleSetBanner, handleResetProfile } = require('../services/profileService');
 const { saveLuckRole, deleteLuckRole, clearLuckSettings, getMemberWeight, MAX_WEIGHT } = require('../services/luckService');
+const { getTopWinners, getUserRank } = require('../services/leaderboardService');
 
 const { parseTime, formatTimeLeft } = require('../utils/time');
 const { selectWinners } = require('../utils/winners');
@@ -159,6 +160,10 @@ function registerInteractionCreate(client) {
             {
               name: '🔄 greroll',
               value: `\`${P}greroll <message_id>\`\n\`/greroll\`\nReroll winners`,
+            },
+            {
+              name: '🏆 gtop',
+              value: `\`${P}gtop\`\n\`/gtop\`\nShow giveaway winners leaderboard`,
             },
             {
               name: '🍀 gluck',
@@ -316,6 +321,46 @@ function registerInteractionCreate(client) {
         const mentions = newWinners.map(id => `<@${id}>`).join(', ');
         await interaction.channel.send(`🔄 Congratulations ${mentions}! You are the new winners of **${giveaway.prize}**!`);
         return interaction.deleteReply();
+      }
+
+      // ─── GTOP ───
+
+      if (commandName === 'gtop') {
+        const top = await getTopWinners(interaction.guild.id, 10);
+        const { rank, wins: myWins } = await getUserRank(interaction.guild.id, interaction.user.id);
+
+        const medals = ['🥇', '🥈', '🥉'];
+
+        let description = '';
+        if (!top.length) {
+          description = 'No winners recorded yet.';
+        } else {
+          description = top.map((row, i) => {
+            const medal = medals[i] || `**#${i + 1}**`;
+            return `${medal} | <@${row.user_id}> | Wins: **${row.wins}**`;
+          }).join('\n');
+        }
+
+        const embed = new EmbedBuilder()
+          .setTitle('🏆 Giveaway Leaderboard')
+          .setColor('#FFD700')
+          .setDescription(description)
+          .setFooter({ text: `${interaction.guild.name} • Top 10 Winners` })
+          .setTimestamp();
+
+        if (rank) {
+          embed.addFields({
+            name: '📍 Your Rank',
+            value: `**#${rank}** | <@${interaction.user.id}> | Wins: **${myWins}**`,
+          });
+        } else {
+          embed.addFields({
+            name: '📍 Your Rank',
+            value: `You haven't won any giveaways yet.`,
+          });
+        }
+
+        return interaction.reply({ embeds: [embed] });
       }
 
       // ─── GLUCK ───

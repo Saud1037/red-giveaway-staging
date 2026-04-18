@@ -45,6 +45,10 @@ const commands = [
     .addSubcommand(s => s.setName('clear').setDescription('Remove all luck roles'))
     .addSubcommand(s => s.setName('me').setDescription('Check your current luck multiplier')),
 
+  new SlashCommandBuilder()
+    .setName('gtop')
+    .setDescription('Show the giveaway winners leaderboard'),
+
   // ─── Greet ───
   new SlashCommandBuilder()
     .setName('greet')
